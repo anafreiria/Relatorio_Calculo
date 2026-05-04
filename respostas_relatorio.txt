@@ -1,0 +1,502 @@
+RESPOSTAS DO RELATORIO - CALCULO NUMERICO
+Sistemas de Equacoes Lineares: Metodos Diretos em Python
+
+Integrantes:
+- Ana Flávia Freiria 
+- Raissa Nunes Peret
+
+============================================================
+1. ELIMINACAO DE GAUSS E PIVOTEAMENTO
+============================================================
+
+Q1.1
+Sistema:
+3x1 + 2x2 + 4x3 = 1
+x1 + x2 + 2x3 = 2
+4x1 + 3x2 - 2x3 = 3
+
+Solucao obtida:  [-3.  5.  0.]
+
+Residuo r = ||Ax - b||2: 0.00e+00
+
+Interpretacao do residuo: 
+
+
+Q1.2
+Matriz triangular superior U gerada apos a eliminacao:
+[ 4.    3.   -2.  ]
+[ 0.    0.25  2.5 ]
+[ 0.    0.    8.  ]
+
+Comparacao com os valores apresentados na aula:
+
+
+Linha trocada pelo pivoteamento:
+linha 1 com linha 3
+
+Q1.3
+Sistema mal-condicionado:
+[0,0003  3] [x1] = [2,0001]
+[1       1] [x2]   [1]
+
+Solucao exata: (1/3, 2/3)^T
+
+Tabela:
+
+Metodo                 x1 calculado        Erro relativo x1        Erro relativo x2
+Sem pivoteamento        0.33338863          1.65849924e-04          8.94069672e-08
+Com piv. parcial        0.33333337          8.94069672e-08          8.94069672e-08
+
+Explicacao sobre por que o pivoteamento reduz o erro:
+O pivoteamento parcial reduz o erro porque escolhe como pivô o maior elemento em módulo da coluna atual.
+No sistema analisado, sem pivoteamento o pivô inicial é 0,0003, produzindo um multiplicador muito grande,
+aproximadamente 3333,33. Esse multiplicador amplifica os erros de arredondamento, principalmente usando
+aritmética float32. Com pivoteamento, as linhas são trocadas e o pivô passa a ser 1, gerando multiplicadores
+menores e maior estabilidade numérica. Por isso, a solução com pivoteamento fica muito mais próxima da
+solução exata.
+
+
+
+Q1.4
+Valores testados para a11: 10^-1, 10^-3, 10^-6, 10^-9
+
+Grafico gerado:
+
+
+Observacoes sobre o erro relativo em x1:
+Observa-se que, sem pivoteamento, o erro relativo em x1 aumenta rapidamente conforme a11 diminui. 
+Isso ocorre porque a eliminação usa a11 como pivô, e quanto menor esse valor, maior é o multiplicador 
+utilizado no processo, amplificando os erros de arredondamento em aritmética float32. Para a11 = 10^-9,
+o erro relativo chega a aproximadamente 1, indicando uma solução praticamente não confiável para x1.
+Com pivoteamento parcial, o erro permanece praticamente constante e muito pequeno, da ordem de 10^-8. 
+Isso ocorre porque o método troca as linhas e evita utilizar o pivô pequeno, tornando o processo 
+numericamente mais estável.
+
+
+Q1.5
+Sistema singular:
+x - 3y + z = 1
+6x - 18y + 4z = 2
+-x + 3y - z = 4
+
+O que aconteceu ao aplicar resolver_gauss:
+Ao aplicar resolver_gauss ao sistema singular, o processo de eliminação encontra um pivô nulo ou muito
+pequeno. Isso indica que a matriz dos coeficientes é singular, ou seja, suas linhas são linearmente
+dependentes. Além disso, o sistema é incompatível, pois há equações com lados esquerdos proporcionais, 
+mas lados direitos não proporcionais. Portanto, o sistema não possui solução única.
+
+O código foi modificado para verificar se |akk| < 10^-12 durante a eliminação. Quando essa condição 
+ocorre, o programa interrompe o cálculo e reporta que o sistema é singular ou quase singular.
+
+
+Modificacao feita para detectar singularidade:
+O código da função gauss foi modificado para verificar, durante a eliminação, se o pivô atual satisfaz
+|akk| < 10^-12. Caso isso ocorra, o programa lança uma exceção ValueError informando que o sistema é 
+singular ou quase singular. Também foi adicionada uma verificação no último pivô da matriz triangular 
+superior e na substituição retroativa.
+
+
+Resultado usando o limiar |akk| < 10^-12: 
+Ao aplicar resolver_gauss ao sistema dado, o programa detectou um pivô nulo ou muito pequeno e interrompeu 
+a resolução. Portanto, o sistema foi identificado como singular ou quase singular, não sendo possível obter 
+uma solução única pelo método de Gauss.
+
+
+============================================================
+2. FATORACAO LU (DOOLITTLE)
+============================================================
+
+Q2.1
+Matriz:
+A = [[ 2,  1, 1],
+     [ 4, -6, 0],
+     [-2,  7, 2]]
+
+Matriz L obtida:
+
+
+Matriz U obtida:
+
+
+Erro de fatoracao ||LU - A||F:
+
+
+Confirmacao da estrutura triangular:
+
+
+Q2.2
+Lados direitos:
+b1 = (1, 2, 3)^T
+b2 = (0, 1, -1)^T
+
+Solucao para b1:
+
+Residuo ||Ax1 - b1||2:
+
+Solucao para b2:
+
+Residuo ||Ax2 - b2||2:
+
+Comentario sobre reutilizar L e U:
+
+
+Q2.3
+Experimento com n = 200, k = 50, semente np.random.seed(42)
+
+Tabela:
+
+Estrategia              Tempo total (s)        Tempo por sistema (ms)
+Gauss repetido
+LU reutilizado
+
+Fator de aceleracao:
+
+Justificativa teorica com base em flops:
+
+
+Q2.4
+Matriz:
+A = [[0, 1],
+     [2, 3]]
+
+Resultado com fatoracao_lu:
+
+
+Resultado com scipy.linalg.lu:
+
+
+Papel da matriz de permutacao P:
+
+
+Como usar P para resolver Ax = b:
+
+
+============================================================
+3. FATORACAO DE CHOLESKY PARA MATRIZES SPD
+============================================================
+
+Q3.1
+Matrizes:
+A1 = [[4, 2],
+      [2, 3]]
+
+A2 = [[1, 2],
+      [2, 1]]
+
+A3 = [[4, 2, 2],
+      [2, 3, 0],
+      [2, 0, 3]]
+
+Previsao antes de executar:
+
+
+Resultado para A1:
+Autovalores:
+Conclusao SPD:
+
+Resultado para A2:
+Autovalores:
+Conclusao SPD:
+
+Resultado para A3:
+Autovalores:
+Conclusao SPD:
+
+Relacao entre autovalores e criterio SPD:
+
+
+Q3.2
+Matrizes SPD aleatorias com n em {50, 100, 200, 500}
+
+Tabela de tempos:
+
+n          Cholesky (s)        LU (s)        Razao LU/Cholesky
+50
+100
+200
+500
+
+Grafico gerado:
+
+Confirmacao da relacao aproximada de 2x:
+
+
+Q3.3
+Regressao linear por equacoes normais.
+
+beta* = (2, -1, 3, 0.5, -2)^T
+
+Beta estimado por Cholesky:
+
+
+Beta estimado por np.linalg.lstsq:
+
+
+Comparacao dos resultados:
+
+
+============================================================
+4. ALGORITMO DE THOMAS PARA SISTEMAS TRIDIAGONAIS
+============================================================
+
+Q4.1
+Sistema tridiagonal 5x5.
+
+Solucao obtida:
+
+
+Residuo ||Ax - d||2:
+
+
+Esse sistema surge na discretizacao de que tipo de equacao diferencial?
+
+
+Q4.2
+Experimento com n em {100, 500, 1000, 5000, 10000}
+
+Tabela:
+
+n          Thomas (ms)        Gauss (ms)        Razao        Razao teorica
+100
+500
+1000
+5000
+10000
+
+Grafico gerado:
+
+Relacao entre os tempos observados:
+
+
+Comparacao com a teoria O(n^3) vs. O(n):
+
+
+Q4.3
+Para n = 10000:
+
+Memoria da matriz densa em MB:
+
+Memoria da representacao tridiagonal com tres vetores em MB:
+
+Discussao das implicacoes para aplicacoes reais:
+
+
+============================================================
+5. CUSTO COMPUTACIONAL EMPIRICO
+============================================================
+
+Q5.1
+Experimento com n em {10, 20, 50, 100, 200, 500}
+
+Tabela de tempos:
+
+n          Tempo resolver_gauss (s)
+10
+20
+50
+100
+200
+500
+
+Lei ajustada T(n) = c * n^alpha:
+
+Valor de alpha encontrado:
+
+Alpha e proximo de 3?
+
+
+Q5.2
+Estimativa de R:
+
+Previsao teorica Tteo(n) = 2n^3 / (3R):
+
+Tabela:
+
+n          Tmed (s)        Tteo (s)        Tmed/Tteo
+
+
+Eficiencia relativa:
+
+
+Por que a eficiencia relativa e menor que 1?
+
+
+Q5.3
+Comparacao para n = 300 e matriz SPD aleatoria.
+
+Tabela:
+
+Metodo                  Tempo (s)        Flops teoricos        Razao vs. Cholesky
+Gauss com pivoteamento
+LU Doolittle
+Cholesky
+numpy.linalg.solve
+
+Explicacao das diferencas entre Python puro e NumPy:
+
+
+============================================================
+6. CONDICIONAMENTO E SENSIBILIDADE A PERTURBACAO
+============================================================
+
+Q6.1
+Matriz de Hilbert.
+
+Tabela:
+
+n          kappa2(Hn)        Erro relativo        Digitos corretos aprox.
+4
+6
+8
+10
+12
+
+A partir de qual n o resultado se torna completamente nao confiavel?
+
+
+Q6.2
+Comparacao entre A = H6 e A = I6.
+
+Grafico/histograma gerado:
+
+Amplificacao maxima observada para H6:
+
+Amplificacao maxima observada para I6:
+
+Os resultados estao dentro do limite relacionado a kappa(A)?
+
+
+Q6.3
+Matriz bem-condicionada:
+
+Condicionamento:
+
+Impacto do erro de 10^-6 em A na solucao:
+
+
+Matriz mal-condicionada:
+
+Condicionamento:
+
+Impacto do erro de 10^-6 em A na solucao:
+
+
+Discussao das implicacoes praticas para engenharia:
+
+
+============================================================
+7. PROJETO INTEGRADOR: PAGERANK NUMERICO
+============================================================
+
+Q7.1
+Mini-rede de 4 paginas.
+
+Matriz de adjacencia G usada:
+
+
+Matriz de transicao P:
+
+
+Sistema montado:
+(I - 0,85 P^T) pi = 0,15/4 * e
+
+PageRank obtido com resolver_gauss:
+
+
+PageRank obtido com resolver_lu:
+
+
+Verificacao ||pi||1:
+
+
+Ordem das paginas por rank decrescente:
+
+
+Q7.2
+Rede com n = 20, p = 0,3, np.random.seed(0).
+
+Tabela:
+
+Metodo                  Tempo (s)        Residuo        Comparacao com scipy
+Gauss
+LU
+scipy.linalg.lu_solve
+
+Comparacao dos ranks obtidos:
+
+
+Q7.3
+Valores de alpha: 0,5; 0,7; 0,85; 0,95; 0,99
+
+Tabela:
+
+alpha        kappa2(I - alpha P^T)
+0,50
+0,70
+0,85
+0,95
+0,99
+
+Grafico gerado:
+
+O que acontece quando alpha -> 1?
+
+
+Por que alpha = 0,85 e considerado um bom compromisso?
+
+
+============================================================
+8. DESAFIO OPCIONAL
+============================================================
+
+Q8.1
+Analise de estabilidade em cascata.
+
+Sequencia de matrizes A_epsilon usada:
+
+
+Resultados obtidos conforme epsilon -> 0:
+
+
+Relacao com kappa(A_epsilon):
+
+
+Q8.2
+Bloco tridiagonal e EDPs 2D.
+
+Matriz construida para m = 10:
+
+
+Tempo com Gauss:
+
+Tempo com scipy.sparse.linalg.spsolve:
+
+Comparacao de tempos e memoria:
+
+
+Q8.3
+Implementacao vetorizada da fatoracao LU.
+
+Descricao da modificacao:
+
+
+Tempo da versao original:
+
+Tempo da versao vetorizada:
+
+Ganho de desempenho:
+
+
+============================================================
+CONCLUSAO
+============================================================
+
+Resumo dos principais resultados:
+
+
+Principais dificuldades encontradas:
+
+
+Relacao entre resultados empiricos e teoria:
+
+
