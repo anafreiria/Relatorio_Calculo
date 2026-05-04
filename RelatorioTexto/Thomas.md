@@ -2,9 +2,7 @@
 
 ## Q4.1 — Execução e Verificação
 
-### Sistema resolvido
-
-O sistema tridiagonal 5×5 abaixo foi montado e resolvido:
+O sistema tridiagonal 5×5  foi montado e resolvido:
 
 $$
 \begin{pmatrix}
@@ -18,7 +16,7 @@ $$
 \begin{pmatrix} 1 \\ 0 \\ 0 \\ 0 \\ 1 \end{pmatrix}
 $$
 
-### Resultado
+### Resultado:
 
 | Componente | Valor |
 |---|---|
@@ -32,11 +30,11 @@ $$
 
 O resíduo nulo (dentro da precisão de máquina) confirma que o algoritmo de Thomas produziu a solução exata para este sistema.
 
-A solução apresenta simetria esperada (x₁ = x₅ e x₂ = x₄), pois o sistema possui coeficientes simétricos e lado direito simétrico, sendo consistente com a natureza do problema.
+Portanto, a solução apresenta simetria esperada (x₁ = x₅ e x₂ = x₄), pois o sistema possui coeficientes simétricos e lado direito simétrico, sendo consistente com a natureza do problema.
 
 ### Contexto físico
 
-Esta matriz surge naturalmente na **discretização por diferenças finitas** do problema de valor de contorno unidimensional:
+Em contexto físico, esta matriz surge naturalmente na **discretização por diferenças finitas** do problema de valor de contorno unidimensional:
 
 $$-u''(x) = f(x), \quad u(0) = u(1) = 0$$
 
@@ -46,7 +44,6 @@ Com passo h = 1/(n+1) e aproximação central u''(xᵢ) ≈ (uᵢ₋₁ − 2u�
 
 ## Q4.2 — Thomas vs. Gauss: Escalonamento
 
-### Metodologia
 
 Para cada n ∈ {100, 500, 1000, 5000, 10000}, foram gerados sistemas tridiagonais com:
 - Diagonal principal: bᵢ = 4
@@ -101,7 +98,7 @@ Para n = 10.000:
 - Densa: n² × 8 bytes / 2²⁰ = 10.000² × 8 / 1.048.576 ≈ **762,94 MB**
 - Tridiagonal: 3 × n × 8 bytes / 2²⁰ ≈ **0,23 MB**
 
-### Implicações práticas
+### Implicações práticas:
 
 1. **Viabilidade computacional:** Uma matriz densa 10.000×10.000 em float64 ocupa quase 763 MB, próximo do limite de RAM de computadores domésticos, e inviável para n ≥ 30.000 (> 7 GB). A representação esparsa por três vetores é praticamente ilimitada.
 
@@ -113,15 +110,15 @@ Para n = 10.000:
 
 ---
 
-## Conclusões
+## Conclusões da aplicação de Thomas
 
-O Algoritmo de Thomas é o método de escolha para sistemas tridiagonais, oferecendo:
+Á partir das aplicações, podemos concluir que o Algoritmo de Thomas é o método de escolha para sistemas tridiagonais, oferecendo:
 
 - **Complexidade ótima O(n)** tanto em tempo quanto em memória;
 - **Precisão equivalente** ao Gauss (resíduo nulo no experimento);
 - **Implementação simples** e naturalmente estável para matrizes diagonalmente dominantes (como as oriundas de diferenças finitas);
 - **Escalabilidade** para problemas de grande porte inviáveis com métodos densos.
 
-A comparação empírica com Gauss confirma que a diferença de desempenho **não é apenas constante**, mas cresce como n², tornando o Thomas de 993× mais rápido em n=1000 e potencialmente 136.000× mais rápido em n=10.000.
+A comparação com Gauss confirma que a diferença de desempenho **não é apenas constante**, mas cresce como n², tornando o Thomas de 993× mais rápido em n=1000 e potencialmente 136.000× mais rápido em n=10.000.
 
 [grafico_thomas_vs_gauss]: grafico_thomas_vs_gauss.png
