@@ -193,13 +193,9 @@ except ValueError as erro:
 
 
 # RAISSA
-print("\n============================================================")
-print("SECAO 2 - Fatoracao LU")
-print("============================================================")
-
 print()
 print("=" * 60)
-print("SECAO 3 — Fatoracao LU (Doolittle)")
+print("SECAO 2 — Fatoracao LU (Doolittle)")
 print("=" * 60)
 
 
@@ -334,41 +330,6 @@ x_plu = subst_retro(U_sp, y_plu)
 print(f"\n    Solucao de Ax = {b_plu} via PLU: x = {x_plu}")
 print(f"    Residuo ||Ax - b||_2 = {np.linalg.norm(A_plu @ x_plu - b_plu):.2e}")
  
-
-
-# TODO: Secao 4 - Thomas vs. Gauss
-
-# TODO: Secao 5 - Custo computacional
-
-# print("\n============================================================")
-# print("SECAO 6 - CONDICIONAMENTO")
-# print("============================================================")
-
-# # TODO: Secao 6 - Condicionamento
-# print("\nQ6.1 - Matriz de Hilbert")
-# for n in [4, 6, 8, 10, 12]:
-#     kappa, erro = experimento_hilbert(n)
-#     print(f"n={n:2d} kappa={kappa:.2e} erro={erro:.2e}")
-
-# # RAISANA
-# print("\n============================================================")
-# print("SECAO 7 - PageRank")
-# print("============================================================")
-
-# plt.tight_layout()
-# plt.savefig("resultados.pdf", dpi=150)
-# plt.show()
-
-# # RAISANA
-# print("\n============================================================")
-# print("SECAO 8 - Desafio")
-# print("============================================================")
-plt.tight_layout()
-plt.savefig("resultados.pdf", dpi=150)
-plt.show()
-
-
-
 # ------------------------------------------------------------------------------
 # Graficos — Q2.3: comparativo de tempos
 fig, ax = plt.subplots(figsize=(6, 4))
@@ -395,3 +356,44 @@ print("\nGrafico salvo em resultados.pdf")
 print("\n" + "-" * 60)
 print("Execucao concluida com sucesso.")
 print("=" * 60)
+
+# print()
+# print("=" * 60)
+# print("SECAO 3 - Fatoração de Cholesky para matrizes SPD")
+# print("=" * 60)
+
+# print()
+# print("=" * 60)
+# print("SECAO 4 - Algoritmo de Thomas para sistemas tridiagonais")
+# print("=" * 60)
+
+# print()
+# print("=" * 60)
+# print("SECAO 5 - Custo computacional empírico")
+# print("=" * 60)
+
+# print()
+# print("=" * 60)
+# print("SECAO 6 - Condicionamento e sensibilidade à pertubacao")
+# print("=" * 60)
+
+# print("\nQ6.1 - Matriz de Hilbert")
+# for n in [4, 6, 8, 10, 12]:
+#     kappa, erro = experimento_hilbert(n)
+#     print(f"n={n:2d} kappa={kappa:.2e} erro={erro:.2e}")
+
+# # RAISANA
+# print()
+# print("=" * 60)
+# print("SECAO 7 - PageRank Numérico")
+# print("=" * 60)
+
+# plt.tight_layout()
+# plt.savefig("resultados.pdf", dpi=150)
+# plt.show()
+
+# # RAISANA
+# print()
+# print("=" * 60)
+# print("SECAO 8 - Desafio")
+# print("=" * 60)
