@@ -1,12 +1,4 @@
 
-O Algoritmo de Thomas é uma especialização da eliminação gaussiana para matrizes **tridiagonais**, aquelas em que apenas a diagonal principal, a subdiagonal e a superdiagonal possuem entradas não nulas. Ao explorar essa estrutura esparsa, o algoritmo reduz a complexidade de **O(n³)** (Gauss geral) para **O(n)**, tornando-se essencial para discretizações de equações diferenciais ordinárias e parciais unidimensionais.
-
-A implementação utilizada (`thomas.py`) divide o processo em duas etapas clássicas:
-
-1. **Eliminação progressiva:** para cada linha k, calcula o multiplicador `m = a[k-1] / b[k-1]` e atualiza a diagonal e o lado direito;
-2. **Substituição retroativa:** resolve de trás para frente, usando apenas os vetores b (modificado) e c.
-
----
 
 ## Q4.1 — Execução e Verificação
 
