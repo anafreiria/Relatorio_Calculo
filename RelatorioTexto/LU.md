@@ -3,7 +3,6 @@
 ## Q2.1 — Construção e verificação de L e U
 
 ### Matriz utilizada
-
 $$
 A = \begin{bmatrix} 2 & 1 & 1 \\ 4 & -6 & 0 \\ -2 & 7 & 2 \end{bmatrix}
 $$
