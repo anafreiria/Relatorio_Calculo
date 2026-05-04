@@ -8,7 +8,7 @@ import time
 import matplotlib.pyplot as plt
 
 
-from cholesky import resolver_cholesky
+from cholesky import cholesky, resolver_cholesky
 from condicao import experimento_hilbert, perturbar_b
 from gauss import gauss, resolver_gauss
 from lu import fatoracao_lu, subst_prog, subst_retro
@@ -20,176 +20,174 @@ matplotlib.use("Agg")
 from scipy.linalg import lu as scipy_lu
 
 
-print("\n============================================================")
-print("SECAO 1 - ELIMINACAO DE GAUSS E PIVOTEAMENTO")
-print("============================================================")
+# print("\n============================================================")
+# print("SECAO 1 - ELIMINACAO DE GAUSS E PIVOTEAMENTO")
+# print("============================================================")
 
-# 1.1 - Verificacao basica
-# Q1.1:
-A = np.array(
-    [
-        [3, 2, 4],
-        [1, 1, 2],
-        [4, 3, -2],
-    ],
-    dtype=float,
-)
-b = np.array([1, 2, 3], dtype=float)
+# # Q1.1 - Verificacao basica
+# print("\n--- Q1.1: Verificacao basica ---")
+# A = np.array(
+#     [
+#         [3, 2, 4],
+#         [1, 1, 2],
+#         [4, 3, -2],
+#     ],
+#     dtype=float,
+# )
+# b = np.array([1, 2, 3], dtype=float)
 
-x = resolver_gauss(A, b)
-x_esperado = np.array([-3, 5, 0], dtype=float)
-residuo = np.linalg.norm(A @ x - b)
+# x = resolver_gauss(A, b)
+# x_esperado = np.array([-3, 5, 0], dtype=float)
+# residuo = np.linalg.norm(A @ x - b)
 
-print("\nQ1.1 - Verificacao basica")
-print(f"Solucao obtida: {x}")
-print(f"Solucao esperada: {x_esperado}")
-print(f"A solucao confere? {np.allclose(x, x_esperado)}")
-print(f"Residuo ||Ax - b||2: {residuo:.2e}")
+# print(f"Solucao obtida: {x}")
+# print(f"Solucao esperada: {x_esperado}")
+# print(f"A solucao confere? {np.allclose(x, x_esperado)}")
+# print(f"Residuo ||Ax - b||2: {residuo:.2e}")
 
+# # Q1.2 - Pivoteamento parcial
+# print("\n--- Q1.2: Matriz triangular superior U ---")
+# Au, bu = gauss(A, b)
 
-# Q1.2 - Imprimir a matriz triangular superior U
-Au, bu = gauss(A, b)
+# print("Matriz U:")
+# print(np.array2string(Au, precision=4, suppress_small=True))
 
-print("\nQ1.2 - Matriz triangular superior U")
-print("Matriz U:")
-print(np.array2string(Au, precision=4, suppress_small=True))
+# print("\nVetor b modificado:")
+# print(np.array2string(bu, precision=4, suppress_small=True))
 
-print("\nVetor b modificado:")
-print(np.array2string(bu, precision=4, suppress_small=True))
+# print("\nLinha trocada pelo pivoteamento: linha 1 com linha 3")
 
-print("\nLinha trocada pelo pivoteamento: linha 1 com linha 3")
-
-# 1.2 - Efeito do pivoteamento na precisao
-# Q1.3 - Experimento com float32
-def gauss_sem_pivoteamento(A, b):
-    """Versao sem pivoteamento para comparar com o metodo original."""
-    A = np.array(A, dtype=np.float32)
-    b = np.array(b, dtype=np.float32)
-    n = len(b)
-
-    for k in range(n - 1):
-        for i in range(k + 1, n):
-            m = A[i, k] / A[k, k]
-            A[i, k:] -= m * A[k, k:]
-            b[i] -= m * b[k]
-
-    return A, b
+# # Q1.3 - Comparacao com float32
+# print("\n--- Q1.3: Tabela de comparacao com float32 ---")
 
 
-def gauss_com_pivoteamento_float32(A, b):
-    """Versao com pivoteamento parcial usando aritmetica float32."""
-    A = np.array(A, dtype=np.float32)
-    b = np.array(b, dtype=np.float32)
-    n = len(b)
+# def gauss_sem_pivoteamento(A, b):
+#     """Versao sem pivoteamento para comparar com o metodo original."""
+#     A = np.array(A, dtype=np.float32)
+#     b = np.array(b, dtype=np.float32)
+#     n = len(b)
 
-    for k in range(n - 1):
-        p = np.argmax(np.abs(A[k:, k])) + k
-        A[[k, p]] = A[[p, k]]
-        b[[k, p]] = b[[p, k]]
+#     for k in range(n - 1):
+#         for i in range(k + 1, n):
+#             m = A[i, k] / A[k, k]
+#             A[i, k:] -= m * A[k, k:]
+#             b[i] -= m * b[k]
 
-        for i in range(k + 1, n):
-            m = A[i, k] / A[k, k]
-            A[i, k:] -= m * A[k, k:]
-            b[i] -= m * b[k]
-
-    return A, b
+#     return A, b
 
 
-def subst_retro_float32(A, b):
-    """Substituicao retroativa usando float32."""
-    n = len(b)
-    x = np.zeros(n, dtype=np.float32)
-    for i in range(n - 1, -1, -1):
-        x[i] = (b[i] - A[i, i + 1:] @ x[i + 1:]) / A[i, i]
-    return x
+# def gauss_com_pivoteamento_float32(A, b):
+#     """Versao com pivoteamento parcial usando aritmetica float32."""
+#     A = np.array(A, dtype=np.float32)
+#     b = np.array(b, dtype=np.float32)
+#     n = len(b)
+
+#     for k in range(n - 1):
+#         p = np.argmax(np.abs(A[k:, k])) + k
+#         A[[k, p]] = A[[p, k]]
+#         b[[k, p]] = b[[p, k]]
+
+#         for i in range(k + 1, n):
+#             m = A[i, k] / A[k, k]
+#             A[i, k:] -= m * A[k, k:]
+#             b[i] -= m * b[k]
+
+#     return A, b
 
 
-A_mal = np.array(
-    [
-        [0.0003, 3],
-        [1, 1],
-    ],
-    dtype=np.float32,
-)
-b_mal = np.array([2.0001, 1], dtype=np.float32)
-x_exato = np.array([1 / 3, 2 / 3], dtype=np.float32)
-
-Au_sem, bu_sem = gauss_sem_pivoteamento(A_mal, b_mal)
-x_sem = subst_retro_float32(Au_sem, bu_sem)
-erro_sem = np.abs((x_sem - x_exato) / x_exato)
-
-Au_com, bu_com = gauss_com_pivoteamento_float32(A_mal, b_mal)
-x_com = subst_retro_float32(Au_com, bu_com)
-erro_com = np.abs((x_com - x_exato) / x_exato)
-
-print("\nQ1.3 - Tabela de comparacao com float32")
-print("Metodo                 x1 calculado        Erro relativo x1        Erro relativo x2")
-print(f"Sem pivoteamento       {x_sem[0]:.8f}           {erro_sem[0]:.8e}          {erro_sem[1]:.8e}")
-print(f"Com piv. parcial       {x_com[0]:.8f}           {erro_com[0]:.8e}          {erro_com[1]:.8e}")
+# def subst_retro_float32(A, b):
+#     """Substituicao retroativa usando float32."""
+#     n = len(b)
+#     x = np.zeros(n, dtype=np.float32)
+#     for i in range(n - 1, -1, -1):
+#         x[i] = (b[i] - A[i, i + 1:] @ x[i + 1:]) / A[i, i]
+#     return x
 
 
+# A_mal = np.array(
+#     [
+#         [0.0003, 3],
+#         [1, 1],
+#     ],
+#     dtype=np.float32,
+# )
+# b_mal = np.array([2.0001, 1], dtype=np.float32)
+# x_exato = np.array([1 / 3, 2 / 3], dtype=np.float32)
 
-# Q1.4 - Variações de coeficientes
-valores_a11 = np.array([1e-1, 1e-3, 1e-6, 1e-9], dtype=np.float32)
-erros_x1_sem = []
-erros_x1_com = []
+# Au_sem, bu_sem = gauss_sem_pivoteamento(A_mal, b_mal)
+# x_sem = subst_retro_float32(Au_sem, bu_sem)
+# erro_sem = np.abs((x_sem - x_exato) / x_exato)
 
-for a11 in valores_a11:
-    A_var = np.array(
-        [
-            [a11, 3],
-            [1, 1],
-        ],
-        dtype=np.float32,
-    )
+# Au_com, bu_com = gauss_com_pivoteamento_float32(A_mal, b_mal)
+# x_com = subst_retro_float32(Au_com, bu_com)
+# erro_com = np.abs((x_com - x_exato) / x_exato)
 
-    # Manteremos a solucao exata (1/3, 2/3)^T para todos os valores de a11.
-    b_var = A_var @ x_exato
+# print("Metodo                 x1 calculado        Erro relativo x1        Erro relativo x2")
+# print(f"Sem pivoteamento       {x_sem[0]:.8f}           {erro_sem[0]:.8e}          {erro_sem[1]:.8e}")
+# print(f"Com piv. parcial       {x_com[0]:.8f}           {erro_com[0]:.8e}          {erro_com[1]:.8e}")
 
-    Au_sem, bu_sem = gauss_sem_pivoteamento(A_var, b_var)
-    x_sem_var = subst_retro_float32(Au_sem, bu_sem)
-    erro_x1_sem = abs((x_sem_var[0] - x_exato[0]) / x_exato[0])
-    erros_x1_sem.append(erro_x1_sem)
+# # Q1.4 - Erro relativo em x1 variando a11
+# print("\n--- Q1.4: Erro relativo em x1 variando a11 ---")
 
-    Au_com, bu_com = gauss_com_pivoteamento_float32(A_var, b_var)
-    x_com_var = subst_retro_float32(Au_com, bu_com)
-    erro_x1_com = abs((x_com_var[0] - x_exato[0]) / x_exato[0])
-    erros_x1_com.append(erro_x1_com)
+# valores_a11 = np.array([1e-1, 1e-3, 1e-6, 1e-9], dtype=np.float32)
+# erros_x1_sem = []
+# erros_x1_com = []
 
-print("\nQ1.4 - Erro relativo em x1 variando a11")
-print("a11             Erro sem pivoteamento        Erro com pivoteamento")
-for a11, erro_sem_i, erro_com_i in zip(valores_a11, erros_x1_sem, erros_x1_com):
-    print(f"{a11:.0e}           {erro_sem_i:.8e}              {erro_com_i:.8e}")
+# for a11 in valores_a11:
+#     A_var = np.array(
+#         [
+#             [a11, 3],
+#             [1, 1],
+#         ],
+#         dtype=np.float32,
+#     )
 
-plt.figure()
-plt.loglog(valores_a11, erros_x1_sem, marker="o", label="Sem pivoteamento")
-plt.loglog(valores_a11, erros_x1_com, marker="s", label="Com piv. parcial")
-plt.title("Q1.4 - Erro relativo em x1")
-plt.xlabel("a11")
-plt.ylabel("Erro relativo em x1")
-plt.grid(True, which="both")
-plt.legend()
-plt.savefig("grafico_q1_4.png", dpi=150)
+#     # Manteremos a solucao exata (1/3, 2/3)^T para todos os valores de a11.
+#     b_var = A_var @ x_exato
 
-# 1.3 - Sistemas singulares e quase singulares
-# Q1.5 - Exercicio com sistema singular
-A_singular = np.array(
-    [
-        [1, -3, 1],
-        [6, -18, 4],
-        [-1, 3, -1],
-    ],
-    dtype=float,
-)
-b_singular = np.array([1, 2, 4], dtype=float)
+#     Au_sem, bu_sem = gauss_sem_pivoteamento(A_var, b_var)
+#     x_sem_var = subst_retro_float32(Au_sem, bu_sem)
+#     erro_x1_sem = abs((x_sem_var[0] - x_exato[0]) / x_exato[0])
+#     erros_x1_sem.append(erro_x1_sem)
 
-print("\nQ1.5 - Sistema singular")
-try:
-    x_singular = resolver_gauss(A_singular, b_singular)
-    print(f"Solucao obtida: {x_singular}")
-except ValueError as erro:
-    print("O metodo detectou singularidade.")
-    print(f"Mensagem: {erro}")
+#     Au_com, bu_com = gauss_com_pivoteamento_float32(A_var, b_var)
+#     x_com_var = subst_retro_float32(Au_com, bu_com)
+#     erro_x1_com = abs((x_com_var[0] - x_exato[0]) / x_exato[0])
+#     erros_x1_com.append(erro_x1_com)
+
+# print("a11             Erro sem pivoteamento        Erro com pivoteamento")
+# for a11, erro_sem_i, erro_com_i in zip(valores_a11, erros_x1_sem, erros_x1_com):
+#     print(f"{a11:.0e}           {erro_sem_i:.8e}              {erro_com_i:.8e}")
+
+# plt.figure()
+# plt.loglog(valores_a11, erros_x1_sem, marker="o", label="Sem pivoteamento")
+# plt.loglog(valores_a11, erros_x1_com, marker="s", label="Com piv. parcial")
+# plt.title("Q1.4 - Erro relativo em x1")
+# plt.xlabel("a11")
+# plt.ylabel("Erro relativo em x1")
+# plt.grid(True, which="both")
+# plt.legend()
+# plt.savefig("grafico_q1_4.png", dpi=150)
+
+# # Q1.5 - Sistema singular
+# print("\n--- Q1.5: Sistema singular ---")
+
+# A_singular = np.array(
+#     [
+#         [1, -3, 1],
+#         [6, -18, 4],
+#         [-1, 3, -1],
+#     ],
+#     dtype=float,
+# )
+# b_singular = np.array([1, 2, 4], dtype=float)
+
+# try:
+#     x_singular = resolver_gauss(A_singular, b_singular)
+#     print(f"Solucao obtida: {x_singular}")
+# except ValueError as erro:
+#     print("O metodo detectou singularidade.")
+#     print(f"Mensagem: {erro}")
 
 
 # RAISSA
@@ -357,27 +355,277 @@ print("\n" + "-" * 60)
 print("Execucao concluida com sucesso.")
 print("=" * 60)
 
+# ANA
 # print()
 # print("=" * 60)
-# print("SECAO 3 - Fatoração de Cholesky para matrizes SPD")
+# print("SECAO 3 - Fatoracao de Cholesky para matrizes SPD")
 # print("=" * 60)
 
+# # Q3.1 - Identificando matrizes SPD
+# print()
+# print("--- Q3.1: Teste de Cholesky e autovalores ---")
+
+# matrizes_cholesky = {
+#     "A1": np.array(
+#         [
+#             [4, 2],
+#             [2, 3],
+#         ],
+#         dtype=float,
+#     ),
+#     "A2": np.array(
+#         [
+#             [1, 2],
+#             [2, 1],
+#         ],
+#         dtype=float,
+#     ),
+#     "A3": np.array(
+#         [
+#             [4, 2, 2],
+#             [2, 3, 0],
+#             [2, 0, 3],
+#         ],
+#         dtype=float,
+#     ),
+# }
+
+# previsoes_cholesky = {
+#     "A1": "SPD, pois e simetrica e espera-se autovalores positivos.",
+#     "A2": "Nao SPD, pois deve possuir autovalor negativo.",
+#     "A3": "SPD, pois e simetrica e espera-se autovalores positivos.",
+# }
+
+# for nome, A_chol in matrizes_cholesky.items():
+#     print("\n" + "-" * 60)
+#     print(f"{nome}")
+#     print("-" * 60)
+#     print("Matriz A:")
+#     print(np.array2string(A_chol, precision=4, suppress_small=True))
+#     print(f"\nPrevisao: {previsoes_cholesky[nome]}")
+
+#     autovalores = np.linalg.eigvalsh(A_chol)
+#     print("\nAutovalores:")
+#     print(np.array2string(autovalores, precision=6, suppress_small=True))
+
+#     try:
+#         L_chol = cholesky(A_chol)
+#         print("\nResultado: Cholesky OK. A matriz e SPD.")
+#         print("\nMatriz L:")
+#         print(np.array2string(L_chol, precision=6, suppress_small=True))
+#         erro_chol = np.linalg.norm(L_chol @ L_chol.T - A_chol, "fro")
+#         print(f"\nErro ||L L^T - A||_F = {erro_chol:.2e}")
+#     except ValueError as erro:
+#         print("\nResultado: Cholesky falhou. A matriz nao e SPD.")
+#         print(f"Mensagem: {erro}")
+
+# # Q3.2 - Cholesky vs. LU: custo
+# print()
+# print("--- Q3.2: Cholesky vs. LU em matrizes SPD aleatorias ---")
+
+# np.random.seed(0)
+# tamanhos_cholesky = np.array([50, 100, 200, 500])
+# tempos_cholesky = []
+# tempos_lu_cholesky = []
+
+# for n in tamanhos_cholesky:
+#     B = np.random.randn(n, n)
+#     A_spd = B.T @ B + n * np.eye(n)
+
+#     t0 = time.perf_counter()
+#     cholesky(A_spd)
+#     tempo_chol = time.perf_counter() - t0
+#     tempos_cholesky.append(tempo_chol)
+
+#     t0 = time.perf_counter()
+#     fatoracao_lu(A_spd)
+#     tempo_lu = time.perf_counter() - t0
+#     tempos_lu_cholesky.append(tempo_lu)
+
+# print(f"\n{'n':>6} {'Cholesky (s)':>18} {'LU (s)':>18} {'Razao LU/Cholesky':>22}")
+# print("-" * 70)
+# for n, tempo_chol, tempo_lu in zip(tamanhos_cholesky, tempos_cholesky, tempos_lu_cholesky):
+#     print(f"{n:>6d} {tempo_chol:>18.6f} {tempo_lu:>18.6f} {tempo_lu / tempo_chol:>22.2f}")
+
+# plt.figure()
+# plt.loglog(tamanhos_cholesky, tempos_cholesky, marker="o", label="Cholesky")
+# plt.loglog(tamanhos_cholesky, tempos_lu_cholesky, marker="s", label="LU")
+# plt.title("Q3.2 - Cholesky vs. LU")
+# plt.xlabel("n")
+# plt.ylabel("Tempo (s)")
+# plt.grid(True, which="both")
+# plt.legend()
+# plt.savefig("grafico_q3_2.png", dpi=150)
+
+# # Q3.3 - Regressao linear via equacoes normais e Cholesky
+# print()
+# print("--- Q3.3: Regressao linear por equacoes normais ---")
+
+# np.random.seed(1)
+
+# # Matriz de design X em R^{100 x 5}: coluna de uns + 4 colunas aleatorias
+# X = np.column_stack(
+#     [
+#         np.ones(100),
+#         np.random.randn(100, 4),
+#     ]
+# )
+
+# beta_estrela = np.array([2, -1, 3, 0.5, -2], dtype=float)
+# epsilon = 0.05 * np.random.randn(100)
+# y = X @ beta_estrela + epsilon
+
+# # Equacoes normais: (X^T X) beta = X^T y
+# A_normal = X.T @ X
+# b_normal = X.T @ y
+
+# beta_cholesky, L_normal = resolver_cholesky(A_normal, b_normal)
+# beta_lstsq = np.linalg.lstsq(X, y, rcond=None)[0]
+
+# residuo_cholesky = np.linalg.norm(X @ beta_cholesky - y)
+# residuo_lstsq = np.linalg.norm(X @ beta_lstsq - y)
+# diferenca_betas = np.linalg.norm(beta_cholesky - beta_lstsq)
+
+# print("\nbeta*:")
+# print(np.array2string(beta_estrela, precision=6, suppress_small=True))
+
+# print("\nBeta estimado por Cholesky:")
+# print(np.array2string(beta_cholesky, precision=6, suppress_small=True))
+
+# print("\nBeta estimado por np.linalg.lstsq:")
+# print(np.array2string(beta_lstsq, precision=6, suppress_small=True))
+
+# print(f"\nResiduo ||X beta_cholesky - y||2 = {residuo_cholesky:.6e}")
+# print(f"Residuo ||X beta_lstsq - y||2    = {residuo_lstsq:.6e}")
+# print(f"Diferenca ||beta_cholesky - beta_lstsq||2 = {diferenca_betas:.6e}")
+
+# RAISSA
+print()
+print("=" * 60)
+print("SECAO 4 - Algoritmo de Thomas para sistemas tridiagonais")
+print("=" * 60)
+
+# # ANA
 # print()
 # print("=" * 60)
-# print("SECAO 4 - Algoritmo de Thomas para sistemas tridiagonais")
+# print("SECAO 5 - Custo computacional empirico")
 # print("=" * 60)
 
+
+# def medir_tempo(funcao):
+#     """Mede o tempo de execucao de uma chamada."""
+#     t0 = time.perf_counter()
+#     resultado = funcao()
+#     tempo = time.perf_counter() - t0
+#     return tempo, resultado
+
+
+
+# # Q5.1 - Lei de escala
 # print()
-# print("=" * 60)
-# print("SECAO 5 - Custo computacional empírico")
-# print("=" * 60)
+# print("--- Q5.1: Lei de escala do metodo de Gauss ---")
 
+# np.random.seed(5)
+# tamanhos_gauss = np.array([10, 20, 50, 100, 200, 500])
+# tempos_gauss_q5 = []
+
+# for n in tamanhos_gauss:
+#     A_q5 = np.random.randn(n, n) + n * np.eye(n)
+#     b_q5 = np.random.randn(n)
+
+#     tempo, _ = medir_tempo(lambda: resolver_gauss(A_q5, b_q5))
+#     tempos_gauss_q5.append(tempo)
+
+# print(f"\n{'n':>6} {'Tempo resolver_gauss (s)':>28}")
+# print("-" * 38)
+# for n, tempo in zip(tamanhos_gauss, tempos_gauss_q5):
+#     print(f"{n:>6d} {tempo:>28.6f}")
+
+# coeficientes = np.polyfit(np.log(tamanhos_gauss), np.log(tempos_gauss_q5), 1)
+# alpha = coeficientes[0]
+# c = np.exp(coeficientes[1])
+# tempos_ajuste = c * tamanhos_gauss**alpha
+
+# print(f"\nLei ajustada: T(n) = {c:.3e} * n^{alpha:.3f}")
+# print(f"Expoente alpha encontrado: {alpha:.3f}")
+
+# plt.figure()
+# plt.loglog(tamanhos_gauss, tempos_gauss_q5, marker="o", label="Tempo medido")
+# plt.loglog(tamanhos_gauss, tempos_ajuste, linestyle="--", label=f"Ajuste alpha={alpha:.2f}")
+# plt.title("Q5.1 - Lei de escala do metodo de Gauss")
+# plt.xlabel("n")
+# plt.ylabel("Tempo (s)")
+# plt.grid(True, which="both")
+# plt.legend()
+# plt.savefig("grafico_q5_1.png", dpi=150)
+
+
+# # Q5.2 - Comparacao com previsao teorica
 # print()
-# print("=" * 60)
-# print("SECAO 6 - Condicionamento e sensibilidade à pertubacao")
-# print("=" * 60)
+# print("--- Q5.2: Comparacao com previsao teorica ---")
 
-# print("\nQ6.1 - Matriz de Hilbert")
+# n_ref = 200
+# total_mult = n_ref**3
+# produto = 1.0
+
+# t0 = time.perf_counter()
+# for i in range(total_mult):
+#     produto *= 1.0000000001
+# tempo_mult = time.perf_counter() - t0
+# R = total_mult / tempo_mult
+
+# tempos_teoricos = (2 * tamanhos_gauss**3 / 3) / R
+# eficiencias = np.array(tempos_gauss_q5) / tempos_teoricos
+
+# print(f"\nEstimativa de R: {R:.3e} multiplicacoes por segundo")
+# print(f"Medida feita com {total_mult} multiplicacoes em loop Python")
+
+# print(f"\n{'n':>6} {'Tmed (s)':>14} {'Tteo (s)':>14} {'Tmed/Tteo':>14}")
+# print("-" * 52)
+# for n, t_med, t_teo, eficiencia in zip(tamanhos_gauss, tempos_gauss_q5, tempos_teoricos, eficiencias):
+#     print(f"{n:>6d} {t_med:>14.6f} {t_teo:>14.6f} {eficiencia:>14.6f}")
+
+
+
+# # Q5.3 - Comparacao de metodos
+# print()
+# print("--- Q5.3: Comparacao de metodos para matriz SPD n=300 ---")
+
+# np.random.seed(6)
+# n_comp = 300
+# B_comp = np.random.randn(n_comp, n_comp)
+# A_comp = B_comp.T @ B_comp + n_comp * np.eye(n_comp)
+# b_comp = np.random.randn(n_comp)
+
+# tempo_gauss_comp, _ = medir_tempo(lambda: resolver_gauss(A_comp, b_comp))
+# tempo_lu_comp, _ = medir_tempo(lambda: fatoracao_lu(A_comp))
+# tempo_chol_comp, _ = medir_tempo(lambda: resolver_cholesky(A_comp, b_comp))
+# tempo_numpy_comp, _ = medir_tempo(lambda: np.linalg.solve(A_comp, b_comp))
+
+# flops_gauss = 2 * n_comp**3 / 3
+# flops_lu = 2 * n_comp**3 / 3
+# flops_chol = n_comp**3 / 3
+# flops_numpy = 2 * n_comp**3 / 3
+
+# metodos_q5 = [
+#     ("Gauss com pivoteamento", tempo_gauss_comp, flops_gauss),
+#     ("LU Doolittle", tempo_lu_comp, flops_lu),
+#     ("Cholesky", tempo_chol_comp, flops_chol),
+#     ("numpy.linalg.solve", tempo_numpy_comp, flops_numpy),
+# ]
+
+# print(f"\n{'Metodo':<24} {'Tempo (s)':>12} {'Flops teoricos':>18} {'Razao vs. Cholesky':>22}")
+# print("-" * 82)
+# for nome, tempo, flops in metodos_q5:
+#     print(f"{nome:<24} {tempo:>12.6f} {flops:>18.3e} {tempo / tempo_chol_comp:>22.2f}")
+
+# RAISSA
+print()
+print("=" * 60)
+print("SECAO 6 - Condicionamento e sensibilidade à pertubacao")
+print("=" * 60)
+
+# print("\n--- Q6.1: Matriz de Hilbert ---")
 # for n in [4, 6, 8, 10, 12]:
 #     kappa, erro = experimento_hilbert(n)
 #     print(f"n={n:2d} kappa={kappa:.2e} erro={erro:.2e}")

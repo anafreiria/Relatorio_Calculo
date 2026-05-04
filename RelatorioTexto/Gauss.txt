@@ -20,6 +20,10 @@ Solucao obtida:  [-3.  5.  0.]
 Residuo r = ||Ax - b||2: 0.00e+00
 
 Interpretacao do residuo: 
+Como o resíduo obtido foi 0.00e+00, a solução calculada satisfaz exatamente o sistema dentro da precisão numérica
+utilizada. Isso confirma que x = (-3, 5, 0)^T é solução do sistema, pois Ax - b é o vetor nulo ou numericamente 
+indistinguível de zero.
+
 
 
 Q1.2
@@ -29,6 +33,9 @@ Matriz triangular superior U gerada apos a eliminacao:
 [ 0.    0.    8.  ]
 
 Comparacao com os valores apresentados na aula:
+Os elementos da matriz U coincidem com os valores apresentados em aula. A primeira linha de U corresponde à antiga
+terceira linha da matriz original, pois o pivoteamento escolheu o maior elemento em módulo da primeira coluna, que 
+era 4. Após a eliminação, os elementos abaixo da diagonal principal ficaram nulos, formando uma matriz triangular superior.
 
 
 Linha trocada pelo pivoteamento:
@@ -56,11 +63,11 @@ menores e maior estabilidade numérica. Por isso, a solução com pivoteamento f
 solução exata.
 
 
-
 Q1.4
 Valores testados para a11: 10^-1, 10^-3, 10^-6, 10^-9
 
 Grafico gerado:
+grafico_q1_4.png
 
 
 Observacoes sobre o erro relativo em x1:
@@ -83,7 +90,8 @@ O que aconteceu ao aplicar resolver_gauss:
 Ao aplicar resolver_gauss ao sistema singular, o processo de eliminação encontra um pivô nulo ou muito
 pequeno. Isso indica que a matriz dos coeficientes é singular, ou seja, suas linhas são linearmente
 dependentes. Além disso, o sistema é incompatível, pois há equações com lados esquerdos proporcionais, 
-mas lados direitos não proporcionais. Portanto, o sistema não possui solução única.
+mas lados direitos não proporcionais. Portanto, o sistema é incompatível e não possui solução.
+
 
 O código foi modificado para verificar se |akk| < 10^-12 durante a eliminação. Quando essa condição 
 ocorre, o programa interrompe o cálculo e reporta que o sistema é singular ou quase singular.
@@ -119,37 +127,84 @@ A3 = [[4, 2, 2],
       [2, 0, 3]]
 
 Previsao antes de executar:
+Antes de executar o algoritmo, foi feita uma previsão com base no critério de matrizes SPD. Como a fatoração
+de Cholesky exige que a matriz seja simétrica positiva definida, esperava-se que matrizes simétricas com 
+autovalores positivos fossem fatoradas com sucesso, enquanto matrizes com algum autovalor negativo causassem 
+falha no método.
 
+A1: Espera-se que seja SPD, pois a matriz é simétrica e seus elementos indicam uma matriz positiva definida.
+A2: Espera-se que não seja SPD, pois apesar de ser simétrica, possui autovalor negativo.
+A3: Espera-se que seja SPD, pois a matriz é simétrica e espera-se que seus autovalores sejam positivos.
 
+------------------------------------------------------------------------------------------------------
 Resultado para A1:
-Autovalores:
+Autovalores: [1.438447, 5.561553]
 Conclusao SPD:
+A matriz A1 é SPD, pois todos os seus autovalores são positivos. A fatoração de Cholesky foi executada com sucesso.
+
+Matriz L obtida:
+[[2.       0.      ]
+ [1.       1.414214]]
+
+Erro ||L L^T - A||_F = 4.44e-16
 
 Resultado para A2:
-Autovalores:
+Autovalores: [-1., 3.]
 Conclusao SPD:
+A matriz A2 não é SPD, pois possui um autovalor negativo. Por isso, a fatoração de Cholesky falhou, 
+indicando que a matriz não é positiva definida.
+
+Mensagem obtida:
+Matriz nao SPD: elemento diagonal 1 negativo (-3.0000e+00)
 
 Resultado para A3:
-Autovalores:
+Autovalores: [0.627719, 3., 6.372281]
 Conclusao SPD:
+A matriz A3 é SPD, pois todos os seus autovalores são positivos. A fatoração de Cholesky foi executada com sucesso.
+
+Matriz L obtida:
+[[ 2.        0.        0.      ]
+ [ 1.        1.414214  0.      ]
+ [ 1.       -0.707107  1.224745]]
+
+Erro ||L L^T - A||_F = 6.29e-16
 
 Relacao entre autovalores e criterio SPD:
+Uma matriz simétrica é positiva definida se, e somente se, todos os seus autovalores são positivos. Nos testes, A1 
+e A3 possuem apenas autovalores positivos e aceitaram a fatoração de Cholesky. Já A2 possui um autovalor negativo, 
+portanto não é SPD, e o método de Cholesky falhou.
 
 
 Q3.2
 Matrizes SPD aleatorias com n em {50, 100, 200, 500}
 
+As matrizes foram geradas na forma A = B^T B + nI, garantindo que sejam simetricas positivas definidas.
+
 Tabela de tempos:
 
 n          Cholesky (s)        LU (s)        Razao LU/Cholesky
-50
-100
-200
-500
+50         0.005958            0.005238      0.88
+100        0.046521            0.067499      1.45
+200        0.152444            0.075003      0.49
+500        0.634194            0.520838      0.82
+
 
 Grafico gerado:
+grafico_q3_2.png
 
 Confirmacao da relacao aproximada de 2x:
+
+Nos resultados obtidos, a relacao teorica de aproximadamente 2x a favor de Cholesky nao apareceu de forma clara. 
+Pelo contrario, a implementacao de LU apresentou tempos menores que a implementacao de Cholesky em todos os tamanhos 
+testados, como mostram as razoes LU/Cholesky menores que 1.
+
+Isso pode ocorrer porque os metodos usados foram implementados em Python puro, com lacos explicitos, e o tempo medido 
+depende nao apenas da contagem teorica de operacoes, mas tambem do custo dos lacos, acessos a memoria e operacoes 
+internas do NumPy. Assim, embora teoricamente a fatoracao de Cholesky exija cerca de metade das operacoes da fatoracao 
+LU para matrizes SPD, a implementacao especifica utilizada nao refletiu exatamente essa vantagem.
+
+Ainda assim, o experimento mostra que ambos os metodos aumentam o tempo de execucao conforme n cresce, confirmando 
+o crescimento do custo computacional para fatoracoes de matrizes densas.
 
 
 Q3.3
@@ -158,65 +213,145 @@ Regressao linear por equacoes normais.
 beta* = (2, -1, 3, 0.5, -2)^T
 
 Beta estimado por Cholesky:
-
+[ 2.003231  -1.009083   2.989144   0.508271  -2.006438]
 
 Beta estimado por np.linalg.lstsq:
+[ 2.003231  -1.009083   2.989144   0.508271  -2.006438]
 
+Residuo ||X beta_cholesky - y||2 = 4.975299e-01
+Residuo ||X beta_lstsq - y||2    = 4.975299e-01
+
+Diferenca ||beta_cholesky - beta_lstsq||2 = 3.257705e-15
 
 Comparacao dos resultados:
+Os coeficientes estimados por Cholesky e por np.linalg.lstsq foram praticamente iguais. A diferenca entre os dois vetores 
+beta foi da ordem de 10^-15, o que indica que os dois metodos produziram a mesma solucao dentro da precisao numerica do computador.
+
+Os valores estimados tambem ficaram muito proximos do vetor beta* = (2, -1, 3, 0.5, -2)^T. As pequenas diferencas observadas 
+ocorrem devido ao ruido gaussiano adicionado ao vetor y. Como os residuos dos dois metodos foram iguais, conclui-se que resolver
+as equacoes normais por Cholesky produziu, neste caso, resultado equivalente ao metodo np.linalg.lstsq.
+
+Neste experimento, foi utilizada a semente np.random.seed(1) para garantir que os resultados fossem reprodutíveis. A matriz de design 
+X foi construída com 100 linhas e 5 colunas, sendo a primeira coluna composta por uns e as outras quatro colunas geradas aleatoriamente 
+com distribuição normal padrão.
+
+O vetor verdadeiro de coeficientes foi definido como beta* = (2, -1, 3, 0.5, -2)^T. Em seguida, foi gerado o vetor y = X beta* + epsilon, 
+onde epsilon representa um ruído gaussiano. No código, foi usado epsilon = 0.05 * np.random.randn(100), ou seja, um ruído aleatório com 
+intensidade pequena. Esse ruído simula erros ou variações nos dados observados.
+
+Por causa da presença desse ruído, o beta estimado não coincide exatamente com beta*, mas fica próximo dele. O objetivo do experimento é 
+verificar se resolver as equações normais por Cholesky produz resultado compatível com np.linalg.lstsq.
+
 
 ============================================================
 5. CUSTO COMPUTACIONAL EMPIRICO
 ============================================================
+
 
 Q5.1
 Experimento com n em {10, 20, 50, 100, 200, 500}
 
 Tabela de tempos:
 
-n          Tempo resolver_gauss (s)
-10
-20
-50
-100
-200
-500
+     n     Tempo resolver_gauss (s)
+--------------------------------------
+    10                     0.000753
+    20                     0.001940
+    50                     0.009507
+   100                     0.057807
+   200                     0.107547
+   500                     0.467136
 
 Lei ajustada T(n) = c * n^alpha:
 
+T(n) = T(n) = 1.456e-05 * n^1.693
+
 Valor de alpha encontrado:
+
+alpha = 1.693
 
 Alpha e proximo de 3?
 
+O expoente encontrado, alpha = 1.693, não ficou próximo de 3. Pela teoria, a eliminação de Gauss para matrizes densas possui custo O(n^3), 
+portanto seria esperado um valor de alpha mais próximo de 3.
+
+A diferença pode ser explicada pelo fato de o experimento ter sido realizado com tempos relativamente pequenos e usando uma implementação 
+em Python/NumPy, em que o custo medido não depende apenas da contagem teórica de operações aritméticas. Para matrizes menores, o tempo 
+também é influenciado por overhead de chamadas de função, laços em Python, alocação de arrays, cache, gerenciamento de memória e variações 
+do sistema operacional.
+
+Mesmo assim, observa-se que o tempo cresce conforme n aumenta. Por exemplo, ao passar de n = 100 para n = 500, o tempo aumentou de 0.057807 s 
+para 0.057807 s. Portanto, o experimento confirma qualitativamente o aumento do custo computacional com o tamanho do sistema, embora o expoente 
+ajustado não tenha coincidido com o valor teórico esperado.
+
 
 Q5.2
+
 Estimativa de R:
 
-Previsao teorica Tteo(n) = 2n^3 / (3R):
+R = 7.254e+06 multiplicacoes por segundo
+
+A estimativa foi feita medindo o tempo de 8.000.000 multiplicacoes em um laco Python.
+
+Previsao teorica:
+
+Tteo(n) = (2n^3/3) / R
 
 Tabela:
 
 n          Tmed (s)        Tteo (s)        Tmed/Tteo
-
+10         0.000753        0.000092        8.195469
+20         0.001940        0.000735        2.638247
+50         0.009507        0.011488        0.827493
+100        0.057807        0.091907        0.628969
+200        0.107547        0.735256        0.146271
+500        0.467136        11.488375       0.040662
 
 Eficiencia relativa:
 
+A razao Tmed/Tteo variou conforme o tamanho da matriz. Para n = 10 e n = 20, o tempo medido foi maior que o tempo teorico estimado. Isso ocorre porque, 
+em tamanhos pequenos, o custo fixo da execucao, chamadas de funcao, criacao de arrays e overhead dos lacos tem grande influencia no tempo total.
+
+Para n maiores, a razao Tmed/Tteo ficou menor que 1. Isso indica que o tempo teorico estimado a partir de multiplicacoes em um laco Python ficou maior do 
+que o tempo realmente medido no metodo de Gauss.
 
 Por que a eficiencia relativa e menor que 1?
 
+A eficiencia relativa ficou menor que 1 para matrizes maiores porque a estimativa de R foi feita usando um laco Python puro, que e muito mais lento do que 
+operacoes vetorizadas e operacoes internas realizadas pelo NumPy. Assim, o valor de R obtido nao representa exatamente a taxa real de operacoes do computador 
+em rotinas numericas otimizadas. Alem disso, o tempo medido do metodo inclui operacoes vetorizadas em trechos como A[i, k:] -= m * A[k, k:], que sao 
+executadas internamente em codigo otimizado. Por isso, a comparacao teorica e apenas aproximada.
+
 
 Q5.3
-Comparacao para n = 300 e matriz SPD aleatoria.
+Comparacao para n = 300 e uma matriz SPD aleatoria.
 
 Tabela:
 
 Metodo                  Tempo (s)        Flops teoricos        Razao vs. Cholesky
-Gauss com pivoteamento
-LU Doolittle
-Cholesky
-numpy.linalg.solve
+Gauss com pivoteamento  0.260904         1.800e+07             0.54
+LU Doolittle            0.231847         1.800e+07             0.48
+Cholesky                0.486515         9.000e+06             1.00
+numpy.linalg.solve      0.093796         1.800e+07             0.19
+
+Analise:
+
+Pela contagem teorica de flops, a fatoracao de Cholesky deveria ter vantagem sobre Gauss e LU para matrizes SPD, pois seu custo teorico e aproximadamente n^3/3, 
+enquanto Gauss e LU possuem custo aproximado de 2n^3/3. Para n = 300, isso corresponde a 9.000e+06 flops para Cholesky e 1.800e+07 flops para Gauss e LU.
+
+No entanto, nos tempos medidos, Cholesky foi mais lento que Gauss e LU. A razao em relacao a Cholesky foi 0.54 para Gauss e 0.48 para LU, indicando que essas 
+implementacoes terminaram em menos tempo. Isso mostra que, na pratica, o tempo medido nao depende apenas da contagem teorica de flops, mas tambem da forma como o 
+algoritmo foi implementado.
 
 Explicacao das diferencas entre Python puro e NumPy:
+
+As implementacoes de Gauss, LU e Cholesky feitas neste trabalho usam lacos explicitos em Python. Esses lacos possuem maior custo de interpretacao, pois cada iteracao 
+e executada pelo interpretador Python. Ja o NumPy utiliza rotinas internas compiladas e otimizadas, geralmente baseadas em bibliotecas como BLAS e LAPACK, que executam 
+operacoes matriciais em codigo de baixo nivel, muito mais eficiente.
+
+Por isso, mesmo que a contagem teorica de flops seja semelhante ou ate maior, numpy.linalg.solve pode ser mais rapido na pratica. O tempo real de execucao depende nao 
+apenas da complexidade teorica do algoritmo, mas tambem da eficiencia da implementacao.
+
 
 ============================================================
 7. PROJETO INTEGRADOR: PAGERANK NUMERICO
