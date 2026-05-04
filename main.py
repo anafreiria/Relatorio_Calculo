@@ -6,7 +6,7 @@ Disciplina: Calculo Numerico
 import numpy as np
 import time
 import matplotlib.pyplot as plt
-
+from math import sin
 
 from cholesky import cholesky, resolver_cholesky
 from condicao import experimento_hilbert, perturbar_b
@@ -328,32 +328,7 @@ x_plu = subst_retro(U_sp, y_plu)
 print(f"\n    Solucao de Ax = {b_plu} via PLU: x = {x_plu}")
 print(f"    Residuo ||Ax - b||_2 = {np.linalg.norm(A_plu @ x_plu - b_plu):.2e}")
  
-# ------------------------------------------------------------------------------
-# Graficos — Q2.3: comparativo de tempos
-fig, ax = plt.subplots(figsize=(6, 4))
-categorias = ["Gauss repetido", "LU reutilizado"]
-tempos = [t_gauss, t_lu]
-cores = ["#e07b54", "#5b8fc9"]
-bars = ax.bar(categorias, tempos, color=cores, width=0.4, edgecolor="white")
-ax.bar_label(bars, fmt="%.3f s", padding=4, fontsize=10)
-ax.set_title(f"Q2.3 — Gauss vs. LU reutilizado\n(n={n_bench}, k={k_bench} sistemas)", fontsize=11)
-ax.set_ylabel("Tempo total (s)")
-ax.set_ylim(0, max(tempos) * 1.25)
-ax.text(
-    0.97, 0.85,
-    f"Aceleracao: {t_gauss / t_lu:.1f}x",
-    transform=ax.transAxes,
-    ha="right", va="top",
-    fontsize=10,
-    bbox=dict(boxstyle="round,pad=0.3", fc="#f0f4fb", ec="#5b8fc9"),
-)
-plt.tight_layout()
-plt.savefig("resultadosDeLU.pdf", dpi=150)
-plt.close()
-print("\nGrafico salvo em resultados.pdf")
-print("\n" + "-" * 60)
-print("Execucao concluida com sucesso.")
-print("=" * 60)
+
 
 # ANA
 # print()
@@ -499,11 +474,81 @@ print("=" * 60)
 # print(f"Residuo ||X beta_lstsq - y||2    = {residuo_lstsq:.6e}")
 # print(f"Diferenca ||beta_cholesky - beta_lstsq||2 = {diferenca_betas:.6e}")
 
-# RAISSA
+# RAISSA - thomas
 print()
 print("=" * 60)
 print("SECAO 4 - Algoritmo de Thomas para sistemas tridiagonais")
 print("=" * 60)
+# Q4.1 — Sistema tridiagonal 5x5 e verificacao
+print()
+print("--- Q4.1: Sistema tridiagonal 5x5 e verificacao ---")
+ 
+a41 = [-1.0, -1.0, -1.0, -1.0]   # subdiagonal
+b41 = [4.0, 4.0, 4.0, 4.0, 4.0]  # diagonal principal
+c41 = [-1.0, -1.0, -1.0, -1.0]   # superdiagonal
+d41 = [1.0, 0.0, 0.0, 0.0, 1.0]  # lado direito
+ 
+x41 = thomas(a41, b41, c41, d41)
+A41 = montar_tridiagonal(a41, b41, c41)
+residuo41 = np.linalg.norm(A41 @ x41 - np.array(d41, dtype=float))
+ 
+print(f"Solucao x = {x41}")
+print(f"Residuo ||Ax - d||_2 = {residuo41:.2e}")
+print("Este sistema surge na discretizacao por diferencas finitas")
+print("da equacao de Poisson 1D: -u''(x) = f(x) com c.c. de Dirichlet.")
+ 
+# Q4.2 — Thomas vs. Gauss: escalonamento
+print()
+print("--- Q4.2: Thomas vs. Gauss — escalonamento ---")
+print(f"\n{'n':>7}  {'Thomas (ms)':>12}  {'Gauss (ms)':>12}  {'Razao':>8}")
+print("-" * 48)
+ 
+sizes_42 = [100, 500, 1000, 5000, 10000]
+t_thomas_42 = []
+t_gauss_42 = []
+ 
+for n in sizes_42:
+    a = np.full(n - 1, -1.0)
+    b_diag = np.full(n, 4.0)
+    c = np.full(n - 1, -1.0)
+    d = np.ones(n)
+ 
+    # Tempo Thomas
+    t0 = time.perf_counter()
+    thomas(a, b_diag, c, d)
+    t_th = (time.perf_counter() - t0) * 1000
+    t_thomas_42.append(t_th)
+ 
+    # Tempo Gauss (apenas ate n=1000, custo O(n^3) inviavel para maiores)
+    if n <= 1000:
+        A_dense = montar_tridiagonal(a, b_diag, c)
+        t0 = time.perf_counter()
+        resolver_gauss(A_dense, d.copy())
+        t_g = (time.perf_counter() - t0) * 1000
+        t_gauss_42.append(t_g)
+        razao = t_g / t_th
+        print(f"{n:>7d}  {t_th:>12.3f}  {t_g:>12.3f}  {razao:>7.1f}x")
+    else:
+        # Extrapola via O(n^3) a partir de n=1000
+        t_g_extrap = t_gauss_42[2] * (n / 1000) ** 3
+        t_gauss_42.append(t_g_extrap)
+        razao = t_g_extrap / t_th
+        print(f"{n:>7d}  {t_th:>12.3f}  {t_g_extrap:>11.0f}* {razao:>7.0f}x")
+ 
+print("(*) valor extrapolado via O(n^3) a partir de n=1000")
+ 
+# Q4.3 — Comparacao de memoria para n=10000
+print()
+print("--- Q4.3: Comparacao de memoria para n=10000 ---")
+n_mem = 10000
+MB_densa = n_mem**2 * 8 / (2**20)
+MB_tri = 3 * n_mem * 8 / (2**20)
+print(f"Matriz densa (float64):          {MB_densa:.2f} MB")
+print(f"Representacao tridiagonal:        {MB_tri:.4f} MB")
+print(f"Fator de reducao de memoria:      {MB_densa / MB_tri:.0f}x")
+print("Para n>=30000, a matriz densa ultrapassaria 7 GB -- inviavel.")
+print("O Thomas resolve sistemas com n>1.000.000 em segundos.")
+
 
 # # ANA
 # print()
@@ -645,3 +690,53 @@ print("=" * 60)
 # print("=" * 60)
 # print("SECAO 8 - Desafio")
 # print("=" * 60)
+
+
+#GERAÇÃO DE GRÁFICOS DE RAISSA
+# ------------------------------------------------------------------------------
+# Graficos — Q2.3: comparativo de tempos
+fig, ax = plt.subplots(figsize=(6, 4))
+categorias = ["Gauss repetido", "LU reutilizado"]
+tempos = [t_gauss, t_lu]
+cores = ["#e07b54", "#5b8fc9"]
+bars = ax.bar(categorias, tempos, color=cores, width=0.4, edgecolor="white")
+ax.bar_label(bars, fmt="%.3f s", padding=4, fontsize=10)
+ax.set_title(f"Q2.3 — Gauss vs. LU reutilizado\n(n={n_bench}, k={k_bench} sistemas)", fontsize=11)
+ax.set_ylabel("Tempo total (s)")
+ax.set_ylim(0, max(tempos) * 1.25)
+ax.text(
+    0.97, 0.85,
+    f"Aceleracao: {t_gauss / t_lu:.1f}x",
+    transform=ax.transAxes,
+    ha="right", va="top",
+    fontsize=10,
+    bbox=dict(boxstyle="round,pad=0.3", fc="#f0f4fb", ec="#5b8fc9"),
+)
+plt.tight_layout()
+plt.savefig("resultadosDeLU.png", dpi=300)
+plt.close()
+print("\nGrafico salvo em resultados.pdf")
+print("\n" + "-" * 60)
+print("Execucao concluida com sucesso.")
+print("=" * 60)
+
+# ---- Grafico Q4.2 -----------------------------------------------
+fig, ax = plt.subplots(figsize=(8, 5))
+n_medidos = sizes_42[:3]
+t_g_medidos = t_gauss_42[:3]
+ 
+ax.loglog(sizes_42, t_thomas_42, marker="o", label="Thomas O(n)", linewidth=2)
+ax.loglog(n_medidos, t_g_medidos, marker="s", color="red",
+          label="Gauss O(n³) medido", linewidth=2)
+ax.loglog(sizes_42[2:], t_gauss_42[2:], marker="s", color="red",
+          linestyle="--", label="Gauss O(n³) extrapolado")
+ 
+ax.set_title("Q4.2 — Thomas vs. Gauss: Escalonamento", fontsize=13)
+ax.set_xlabel("n (tamanho do sistema)")
+ax.set_ylabel("Tempo (ms)")
+ax.legend()
+ax.grid(True, which="both", alpha=0.4)
+plt.tight_layout()
+plt.savefig("grafico_thomas_vs_gauss.png", dpi=150)
+plt.close()
+print("\nGrafico salvo em grafico_thomas_vs_gauss.png")
