@@ -360,58 +360,125 @@ apenas da complexidade teorica do algoritmo, mas tambem da eficiencia da impleme
 Q7.1
 Mini-rede de 4 paginas.
 
+(a) Construcao da matriz de transicao P
+
 Matriz de adjacencia G usada:
 
+G =
+[[0 1 1 0]
+ [0 0 1 1]
+ [1 0 0 1]
+ [0 0 1 0]]
 
-Matriz de transicao P:
+A matriz de transicao P foi construida normalizando as colunas de G. Assim, cada coluna representa a distribuicao de probabilidade de sair de uma pagina para as paginas apontadas por ela.
 
+P =
+[[0.0000 1.0000 0.3333 0.0000]
+ [0.0000 0.0000 0.3333 0.5000]
+ [1.0000 0.0000 0.0000 0.5000]
+ [0.0000 0.0000 0.3333 0.0000]]
 
-Sistema montado:
+(b) Montagem do sistema linear
+
 (I - 0,85 P^T) pi = 0,15/4 * e
+
+Usando alpha = 0,85, o sistema montado foi A pi = b, com A = I - 0,85 P^T:
+
+A =
+[[ 1.0000  0.0000 -0.8500  0.0000]
+ [-0.8500  1.0000  0.0000  0.0000]
+ [-0.2833 -0.2833  1.0000 -0.2833]
+ [ 0.0000 -0.4250 -0.4250  1.0000]]
+
+b =
+[0.0375 0.0375 0.0375 0.0375]
+
+(c) Resolucao com resolver_gauss e com LU
 
 PageRank obtido com resolver_gauss:
 
+pi = [0.25 0.25 0.25 0.25]
 
-PageRank obtido com resolver_lu:
+PageRank obtido com LU:
 
+pi = [0.25 0.25 0.25 0.25]
+
+(d) Verificacao de que ||pi||1 = 1
 
 Verificacao ||pi||1:
 
+||pi_gauss||1 = 1.000000
+||pi_lu||1    = 1.000000
+
+A diferenca entre os vetores obtidos pelos dois metodos foi:
+
+||pi_gauss - pi_lu||2 = 0.000000e+00
+
+(e) Ordenacao das paginas por rank decrescente
 
 Ordem das paginas por rank decrescente:
 
+[1, 2, 3, 4]
+
+Interpretacao:
+
+Os dois metodos produziram exatamente o mesmo vetor de PageRank. Como todos os valores de pi foram iguais a 0.25, as quatro paginas receberam a mesma importancia na mini-rede 
+analisada. Isso indica que, para essa estrutura de links e com alpha = 0.85, o rank ficou distribuido uniformemente entre as paginas. A norma ||pi||1 igual a 1 confirma que o 
+vetor obtido representa uma distribuicao de probabilidade.
+
 
 Q7.2
-Rede com n = 20, p = 0,3, np.random.seed(0).
+Rede com n = 20 paginas, probabilidade de aresta p = 0,3 e np.random.seed(0).
 
 Tabela:
 
-Metodo                  Tempo (s)        Residuo        Comparacao com scipy
-Gauss
-LU
-scipy.linalg.lu_solve
+Metodo                  Tempo (s)        Residuo        Diferenca vs SciPy
+Gauss                   0.000483         4.086738e-17   3.399350e-17
+LU propria              0.000456         2.537682e-17   3.863413e-17
+SciPy lu_solve          0.000188         3.088587e-17   0.000000e+00
+
+Top 5 paginas pelo PageRank calculado com SciPy:
+
+[3, 8, 11, 9, 16]
 
 Comparacao dos ranks obtidos:
 
+Os tres metodos produziram resultados numericamente equivalentes. As diferencas entre Gauss e SciPy, e entre LU propria e SciPy, ficaram da ordem de 10^-17, o que e desprezivel 
+e esta dentro dos erros de arredondamento numerico.
+
+Os residuos tambem ficaram muito pequenos, da ordem de 10^-17, indicando que os vetores de PageRank obtidos satisfazem muito bem o sistema linear.
+
+Em relacao ao tempo, scipy.linalg.lu_solve foi o metodo mais rapido, com tempo de 0.000188 s. Isso ocorre porque SciPy utiliza rotinas numericas otimizadas, enquanto Gauss e LU 
+propria foram implementados diretamente em Python.
+
 
 Q7.3
-Valores de alpha: 0,5; 0,7; 0,85; 0,95; 0,99
+Condicionamento de I - alpha P^T para diferentes valores de alpha.
 
 Tabela:
 
 alpha        kappa2(I - alpha P^T)
-0,50
-0,70
-0,85
-0,95
-0,99
+0.50         2.644182e+00
+0.70         4.886070e+00
+0.85         1.054789e+01
+0.95         3.331138e+01
+0.99         1.700658e+02
 
 Grafico gerado:
 
+grafico_q7_3.png
+
 O que acontece quando alpha -> 1?
 
+Observa-se que o numero de condicionamento aumenta conforme alpha se aproxima de 1. Para alpha = 0.50, kappa2 foi aproximadamente 2.64. Para alpha = 0.99, o valor subiu para 
+aproximadamente 170.07. Isso mostra que o sistema linear fica mais mal-condicionado quando alpha se aproxima de 1.
 
-Por que alpha = 0,85 e considerado um bom compromisso?
+Por que alpha = 0.85 e considerado um bom compromisso?
+
+O valor alpha = 0.85 equilibra dois aspectos importantes do PageRank. Ele ainda da bastante peso a estrutura de links da rede, mas mantem uma parcela de amortecimento suficiente 
+para evitar que o sistema fique excessivamente mal-condicionado. No experimento, para alpha = 0.85, o condicionamento foi aproximadamente 10.55, bem menor que os valores obtidos 
+para alpha = 0.95 e alpha = 0.99. Portanto, alpha = 0.85 representa um compromisso entre considerar a conectividade da rede e preservar estabilidade numerica.
+
 
 
 ============================================================
@@ -423,11 +490,37 @@ Analise de estabilidade em cascata.
 
 Sequencia de matrizes A_epsilon usada:
 
+A sequencia escolhida foi:
+
+A_epsilon =
+[[1, 1],
+ [1, 1 + epsilon]]
+
+Quando epsilon tende a zero, a matriz tende a A_0 =
+[[1, 1],
+ [1, 1]]
+
+Essa matriz A_0 e singular, pois suas duas linhas sao iguais. Para cada valor de epsilon, foi usado x_exato = (1, 1)^T e b = A_epsilon x_exato.
 
 Resultados obtidos conforme epsilon -> 0:
 
+epsilon      kappa(A_epsilon)     residuo        erro relativo
+1e-01        4.207623e+01         0.000000e+00   0.000000e+00
+1e-03        4.002001e+03         0.000000e+00   0.000000e+00
+1e-06        4.000002e+06         0.000000e+00   2.220446e-10
+1e-09        4.000000e+09         0.000000e+00   0.000000e+00
+1e-12        3.999405e+12         0.000000e+00   0.000000e+00
+
+Grafico gerado: grafico_q8_1.png
 
 Relacao com kappa(A_epsilon):
+
+Observa-se que o numero de condicionamento cresce rapidamente conforme epsilon diminui. Para epsilon = 10^-1, kappa(A_epsilon) foi aproximadamente 4.21e+01. 
+Para epsilon = 10^-12, o valor aumentou para aproximadamente 4.00e+12. Isso confirma que a matriz fica cada vez mais mal-condicionada a medida que se aproxima 
+da matriz singular A_0.
+
+Mesmo com residuos iguais a zero ou muito proximos de zero, o alto condicionamento indica que pequenas perturbacoes nos dados poderiam causar grandes alteracoes 
+na solucao. Portanto, o residuo pequeno sozinho nao garante estabilidade numerica quando a matriz e mal-condicionada.
 
 
 Q8.2
@@ -435,12 +528,32 @@ Bloco tridiagonal e EDPs 2D.
 
 Matriz construida para m = 10:
 
+Foi construida a matriz bloco-tridiagonal associada a discretizacao por diferencas finitas do problema de Poisson em uma grade 10 x 10. Assim, o tamanho do sistema foi:
+
+n = m^2 = 100
+
+A matriz foi montada em formato esparso CSR para uso com scipy.sparse.linalg.spsolve e tambem convertida para matriz densa para comparacao com o metodo de Gauss.
 
 Tempo com Gauss:
 
+Tempo Gauss denso: 0.030770 s
+Residuo Gauss denso: 3.260050e-14
+
 Tempo com scipy.sparse.linalg.spsolve:
 
+Tempo spsolve esparso: 0.006814 s
+Residuo spsolve esparso: 2.631767e-14
+
 Comparacao de tempos e memoria:
+
+Memoria matriz densa: 0.0763 MB
+Memoria matriz esparsa CSR: 0.0056 MB
+
+O metodo esparso foi mais rapido que o Gauss com matriz densa. Alem disso, a representacao esparsa usou muito menos memoria. A matriz densa ocupou aproximadamente 
+0.0763 MB, enquanto a matriz esparsa em formato CSR ocupou cerca de 0.0056 MB.
+
+Isso mostra a vantagem de explorar a estrutura esparsa de matrizes vindas de discretizacoes de EDPs. Em problemas maiores, armazenar e resolver o sistema como matriz 
+densa se torna rapidamente inviavel, enquanto metodos esparsos continuam sendo mais adequados.
 
 
 Q8.3
@@ -448,12 +561,21 @@ Implementacao vetorizada da fatoracao LU.
 
 Descricao da modificacao:
 
+Foi implementada uma versao vetorizada da fatoracao LU. Em vez de atualizar cada linha da matriz U usando lacos internos em Python, a nova versao calcula os 
+multiplicadores de uma coluna de uma vez e atualiza o bloco restante da matriz com uma operacao vetorizada usando np.outer.
 
-Tempo da versao original:
+Essa mudanca reduz o numero de lacos explicitos em Python e desloca parte do trabalho para operacoes internas otimizadas do NumPy.
 
-Tempo da versao vetorizada:
+Tempo LU original: 0.055007 s
 
-Ganho de desempenho:
+Tempo LU vetorizada: 0.005557 s
+
+Ganho de desempenho: 9.90x
+
+Erro ||LU - A||_F da versao original: 6.363023e-15
+
+O ganho de desempenho foi significativo: a versao vetorizada foi aproximadamente 9.90 vezes mais rapida que a versao original. Isso confirma que, em Python, 
+evitar lacos explicitos e usar operacoes vetorizadas do NumPy pode melhorar bastante o desempenho, mantendo erro de fatoracao muito pequeno.
 
 
 ============================================================
@@ -462,10 +584,52 @@ CONCLUSAO
 
 Resumo dos principais resultados:
 
+Ao longo do trabalho foram implementados e testados diferentes metodos diretos para resolucao de sistemas lineares. Na eliminacao de Gauss, a solucao do sistema da aula 
+foi obtida corretamente, com residuo nulo dentro da precisao numerica. Os experimentos com sistema mal-condicionado mostraram a importancia do pivoteamento parcial: sem 
+pivoteamento, o erro cresceu fortemente quando o pivo inicial se tornou pequeno; com pivoteamento, o erro permaneceu pequeno.
+
+Na fatoracao LU, foi verificado que a matriz A pode ser decomposta em L e U com erro de fatoracao muito pequeno. Tambem foi observado que a reutilizacao dos fatores L e U 
+é vantajosa quando ha varios lados direitos, pois evita refatorar a matriz a cada novo sistema. A fatoracao PLU mostrou a importancia das permutacoes quando a matriz possui 
+pivo nulo ou inadequado.
+
+Na fatoracao de Cholesky, os testes confirmaram que o metodo funciona apenas para matrizes simetricas positivas definidas. As matrizes com autovalores positivos aceitaram a 
+fatoracao, enquanto a matriz com autovalor negativo falhou. Na aplicacao em regressao linear, a solucao das equacoes normais via Cholesky coincidiu numericamente com o resultado 
+de np.linalg.lstsq.
+
+O algoritmo de Thomas se mostrou adequado para sistemas tridiagonais, com baixo custo computacional e menor uso de memoria. Na comparacao com Gauss, ficou evidente que explorar 
+a estrutura tridiagonal e muito mais eficiente do que montar e resolver o sistema como matriz densa.
+
+Nos experimentos de custo computacional, os tempos medidos cresceram com o tamanho das matrizes, confirmando a tendencia teorica de aumento do custo. Tambem foi observado que 
+implementacoes em Python puro podem ser muito mais lentas que rotinas otimizadas do NumPy e SciPy.
+
+Na parte de condicionamento, as matrizes de Hilbert mostraram como sistemas mal-condicionados podem amplificar erros e tornar a solucao numericamente pouco confiavel. O estudo 
+do PageRank mostrou uma aplicacao real de sistemas lineares, em que o vetor de ranks foi calculado por diferentes metodos e os resultados foram numericamente equivalentes. 
+O desafio extra reforcou a importancia do condicionamento, da estrutura esparsa e da vetorizacao para melhorar desempenho.
+
 
 Principais dificuldades encontradas:
+
+Uma das principais dificuldades foi organizar os experimentos de forma que cada questao pudesse ser executada e analisada separadamente. Como alguns testes envolvem matrizes 
+maiores e medicao de tempo, foi necessario comentar e descomentar partes do codigo para evitar execucoes muito demoradas ou geracao repetida de graficos.
+
+Outra dificuldade foi interpretar resultados que nem sempre coincidiram perfeitamente com a expectativa teorica. Em alguns casos, como na comparacao entre Cholesky e LU, a vantagem 
+teorica de Cholesky nao apareceu claramente nos tempos medidos. Isso exigiu analisar nao apenas a contagem de operacoes, mas tambem o impacto da implementacao em Python, do uso de 
+NumPy e das variacoes naturais de tempo de execucao.
+
+Tambem houve cuidado na interpretacao de sistemas mal-condicionados. Em alguns experimentos, o residuo era pequeno, mas o numero de condicionamento era muito alto. Isso mostrou que 
+um residuo pequeno nao e suficiente, sozinho, para garantir que a solucao seja numericamente confiavel.
 
 
 Relacao entre resultados empiricos e teoria:
 
+Os resultados obtidos confirmam varios pontos da teoria estudada. A eliminacao de Gauss e a fatoracao LU resolvem sistemas lineares gerais, mas podem sofrer com pivos pequenos quando 
+nao ha pivoteamento. O pivoteamento parcial melhora a estabilidade numerica ao escolher pivos maiores em modulo.
 
+A fatoracao de Cholesky se mostrou adequada para matrizes SPD, em concordancia com o criterio dos autovalores positivos. O algoritmo de Thomas confirmou a vantagem teorica de metodos 
+especializados para sistemas tridiagonais, com custo O(n), enquanto metodos densos como Gauss possuem custo muito maior.
+
+Os experimentos de condicionamento reforcaram que matrizes com alto numero de condicao amplificam perturbacoes nos dados, tornando a solucao sensivel a erros de arredondamento ou medicao. 
+Isso foi observado nas matrizes de Hilbert e na sequencia A_epsilon do desafio.
+
+Por fim, as comparacoes de desempenho mostraram que a complexidade teorica e essencial para entender o comportamento dos algoritmos, mas o tempo real tambem depende fortemente da implementacao. 
+Rotinas otimizadas de NumPy e SciPy, alem de representacoes esparsas e operacoes vetorizadas, podem produzir ganhos expressivos em relacao a implementacoes com lacos explicitos em Python.

@@ -1,7 +1,7 @@
 """
-main.py
+Alunas: Ana Flávia Freiria Rodrigues e Raissa Nunes Peret
 Plano de Investigacao - Sistemas Lineares
-Disciplina: Calculo Numerico
+Disciplina: Cálculo Numérico
 """
 import numpy as np
 import time
@@ -10,11 +10,22 @@ from math import sin
 import matplotlib
 matplotlib.use("Agg")
 from scipy.linalg import hilbert
+from scipy.sparse import diags, eye as sparse_eye, kron
+from scipy.sparse.linalg import spsolve
 
 from cholesky import cholesky, resolver_cholesky
 from condicao import experimento_hilbert, perturbar_b
 from gauss import gauss, resolver_gauss
 from lu import fatoracao_lu, subst_prog, subst_retro
+from pagerank import (
+    comparar_metodos,
+    condicoes_alpha,
+    grafo_aleatorio,
+    matriz_transicao,
+    pagerank_gauss,
+    pagerank_lu,
+    sistema_pagerank,
+)
 from thomas import montar_tridiagonal, thomas
 
 import matplotlib
@@ -22,10 +33,11 @@ matplotlib.use("Agg")
 
 from scipy.linalg import lu as scipy_lu
 
+# ANA
+print("=" * 60)
+print("SECAO 1 — Eliminação de Gauss com pivoteamento parcial")
+print("=" * 60)
 
-# print("\n============================================================")
-# print("SECAO 1 - ELIMINACAO DE GAUSS E PIVOTEAMENTO")
-# print("============================================================")
 
 # # Q1.1 - Verificacao basica
 # print("\n--- Q1.1: Verificacao basica ---")
@@ -200,144 +212,144 @@ print("SECAO 2 — Fatoracao LU (Doolittle)")
 print("=" * 60)
 
 
-# Q2.1 
-print()
-print("--- Q2.1: Construcao de L e U e verificacao ---")
+# # Q2.1 
+# print()
+# print("--- Q2.1: Construcao de L e U e verificacao ---")
  
-A_lu = np.array(
-    [
-        [2.0,  1.0,  1.0],
-        [4.0, -6.0,  0.0],
-        [-2.0,  7.0,  2.0],
-    ]
-)
+# A_lu = np.array(
+#     [
+#         [2.0,  1.0,  1.0],
+#         [4.0, -6.0,  0.0],
+#         [-2.0,  7.0,  2.0],
+#     ]
+# )
  
-L, U = fatoracao_lu(A_lu)
+# L, U = fatoracao_lu(A_lu)
  
-print("\nMatriz L (triangular inferior):")
-print(np.array2string(L, precision=6, suppress_small=True))
+# print("\nMatriz L (triangular inferior):")
+# print(np.array2string(L, precision=6, suppress_small=True))
  
-print("\nMatriz U (triangular superior):")
-print(np.array2string(U, precision=6, suppress_small=True))
+# print("\nMatriz U (triangular superior):")
+# print(np.array2string(U, precision=6, suppress_small=True))
  
-erro_fat = np.linalg.norm(L @ U - A_lu, "fro")
-print(f"\nErro de fatoracao ||LU - A||_F = {erro_fat:.2e}")
+# erro_fat = np.linalg.norm(L @ U - A_lu, "fro")
+# print(f"\nErro de fatoracao ||LU - A||_F = {erro_fat:.2e}")
  
-# Verificacao visual da estrutura triangular
-tril_L = np.allclose(L, np.tril(L))
-triu_U = np.allclose(U, np.triu(U))
-diag_L_uns = np.allclose(np.diag(L), np.ones(L.shape[0]))
-print(f"L e triangular inferior? {tril_L}")
-print(f"Diagonal de L sao todos 1? {diag_L_uns}")
-print(f"U e triangular superior? {triu_U}")
+# # Verificacao visual da estrutura triangular
+# tril_L = np.allclose(L, np.tril(L))
+# triu_U = np.allclose(U, np.triu(U))
+# diag_L_uns = np.allclose(np.diag(L), np.ones(L.shape[0]))
+# print(f"L e triangular inferior? {tril_L}")
+# print(f"Diagonal de L sao todos 1? {diag_L_uns}")
+# print(f"U e triangular superior? {triu_U}")
 
 
-# Q2.2 
-print()
-print("--- Q2.2: Multiplos lados direitos com L e U reutilizados ---")
+# # Q2.2 
+# print()
+# print("--- Q2.2: Multiplos lados direitos com L e U reutilizados ---")
  
-b1 = np.array([1.0, 2.0, 3.0])
-b2 = np.array([0.0, 1.0, -1.0])
+# b1 = np.array([1.0, 2.0, 3.0])
+# b2 = np.array([0.0, 1.0, -1.0])
  
-# L e U ja calculado acima, reutiliza sem refatorar
-y1 = subst_prog(L, b1)
-x1 = subst_retro(U, y1)
+# # L e U ja calculado acima, reutiliza sem refatorar
+# y1 = subst_prog(L, b1)
+# x1 = subst_retro(U, y1)
  
-y2 = subst_prog(L, b2)
-x2 = subst_retro(U, y2)
+# y2 = subst_prog(L, b2)
+# x2 = subst_retro(U, y2)
  
-res1 = np.linalg.norm(A_lu @ x1 - b1)
-res2 = np.linalg.norm(A_lu @ x2 - b2)
+# res1 = np.linalg.norm(A_lu @ x1 - b1)
+# res2 = np.linalg.norm(A_lu @ x2 - b2)
  
-print(f"\nb1 = {b1}  =>  x1 = {x1}")
-print(f"Residuo ||A x1 - b1||_2 = {res1:.2e}")
-print(f"\nb2 = {b2}  =>  x2 = {x2}")
-print(f"Residuo ||A x2 - b2||_2 = {res2:.2e}")
- 
-
-# Q2.3 — Vantagem com multiplos lados direitos (benchmarking)
-print()
-print("--- Q2.3: Gauss repetido vs. LU reutilizado (n=200, k=50) ---")
- 
-np.random.seed(42)
-n_bench = 200
-k_bench = 50
-A_bench = np.random.randn(n_bench, n_bench)
-# Garante invertibilidade
-A_bench += n_bench * np.eye(n_bench)
-Bs_bench = [np.random.randn(n_bench) for _ in range(k_bench)]
- 
-# Estrategia (a): Gauss repetido
-t0 = time.perf_counter()
-for bk in Bs_bench:
-    resolver_gauss(A_bench, bk)
-t_gauss = time.perf_counter() - t0
- 
-# Estrategia (b): LU reutilizado
-t0 = time.perf_counter()
-L_bench, U_bench = fatoracao_lu(A_bench)
-for bk in Bs_bench:
-    yk = subst_prog(L_bench, bk)
-    subst_retro(U_bench, yk)
-t_lu = time.perf_counter() - t0
- 
-print(f"\n{'Estrategia':<25} {'Tempo total (s)':>18} {'Por sistema (ms)':>18}")
-print("-" * 63)
-print(f"{'Gauss repetido':<25} {t_gauss:>18.4f} {t_gauss / k_bench * 1000:>18.3f}")
-print(f"{'LU reutilizado':<25} {t_lu:>18.4f} {t_lu   / k_bench * 1000:>18.3f}")
-print(f"\nFator de aceleracao: {t_gauss / t_lu:.2f}x")
+# print(f"\nb1 = {b1}  =>  x1 = {x1}")
+# print(f"Residuo ||A x1 - b1||_2 = {res1:.2e}")
+# print(f"\nb2 = {b2}  =>  x2 = {x2}")
+# print(f"Residuo ||A x2 - b2||_2 = {res2:.2e}")
  
 
-# Q2.4 — Fatoracao PLU com pivoteamento 
-print()
-print("--- Q2.4: Fatoracao PLU com pivoteamento ---")
+# # Q2.3 — Vantagem com multiplos lados direitos (benchmarking)
+# print()
+# print("--- Q2.3: Gauss repetido vs. LU reutilizado (n=200, k=50) ---")
  
-A_plu = np.array([[0.0, 1.0], [2.0, 3.0]])
+# np.random.seed(42)
+# n_bench = 200
+# k_bench = 50
+# A_bench = np.random.randn(n_bench, n_bench)
+# # Garante invertibilidade
+# A_bench += n_bench * np.eye(n_bench)
+# Bs_bench = [np.random.randn(n_bench) for _ in range(k_bench)]
  
-# (a) Testa fatoracao_lu sem pivoteamento
-print("\n(a) Tentando fatoracao_lu (sem pivoteamento) em A = [[0,1],[2,3]]:")
-try:
-    L_sem, U_sem = fatoracao_lu(A_plu)
-    print(f"    Resultado L:\n{L_sem}")
-    print(f"    Resultado U:\n{U_sem}")
-    print(f"    Erro ||LU-A||_F = {np.linalg.norm(L_sem @ U_sem - A_plu, 'fro'):.2e}")
-    # Verificar se U[0,0] e zero (divisao por zero iminente)
-    if abs(U_sem[0, 0]) < 1e-14:
-        print("    ATENCAO: pivo U[0,0] nulo — resultado invalido (NaN/Inf esperado)!")
-    else:
-        print("    Concluiu sem excecao (verifique se o resultado e confiavel).")
-except Exception as e:
-    print(f"    ERRO capturado: {e}")
+# # Estrategia (a): Gauss repetido
+# t0 = time.perf_counter()
+# for bk in Bs_bench:
+#     resolver_gauss(A_bench, bk)
+# t_gauss = time.perf_counter() - t0
  
-# (b) scipy.linalg.lu
-print("\n(b) Usando scipy.linalg.lu (com pivoteamento):")
-P_sp, L_sp, U_sp = scipy_lu(A_plu)
+# # Estrategia (b): LU reutilizado
+# t0 = time.perf_counter()
+# L_bench, U_bench = fatoracao_lu(A_bench)
+# for bk in Bs_bench:
+#     yk = subst_prog(L_bench, bk)
+#     subst_retro(U_bench, yk)
+# t_lu = time.perf_counter() - t0
  
-print(f"\n    Matriz de permutacao P:\n{P_sp}")
-print(f"\n    Triangular inferior L:\n{L_sp}")
-print(f"\n    Triangular superior U:\n{U_sp}")
-print(f"\n    Verificacao P @ A = L @ U:")
-print(f"    P @ A =\n{P_sp @ A_plu}")
-print(f"    L @ U =\n{L_sp @ U_sp}")
-err_plu = np.linalg.norm(P_sp @ A_plu - L_sp @ U_sp, "fro")
-print(f"\n    Erro ||PA - LU||_F = {err_plu:.2e}")
+# print(f"\n{'Estrategia':<25} {'Tempo total (s)':>18} {'Por sistema (ms)':>18}")
+# print("-" * 63)
+# print(f"{'Gauss repetido':<25} {t_gauss:>18.4f} {t_gauss / k_bench * 1000:>18.3f}")
+# print(f"{'LU reutilizado':<25} {t_lu:>18.4f} {t_lu   / k_bench * 1000:>18.3f}")
+# print(f"\nFator de aceleracao: {t_gauss / t_lu:.2f}x")
  
-# Demonstracao: como resolver Ax = b com PLU
-b_plu = np.array([1.0, 2.0])
-# PA = LU  =>  Ax = b  =>  PAx = Pb  =>  LUx = Pb
-Pb = P_sp @ b_plu
-y_plu = subst_prog(L_sp, Pb)
-x_plu = subst_retro(U_sp, y_plu)
-print(f"\n    Solucao de Ax = {b_plu} via PLU: x = {x_plu}")
-print(f"    Residuo ||Ax - b||_2 = {np.linalg.norm(A_plu @ x_plu - b_plu):.2e}")
+
+# # Q2.4 — Fatoracao PLU com pivoteamento 
+# print()
+# print("--- Q2.4: Fatoracao PLU com pivoteamento ---")
+ 
+# A_plu = np.array([[0.0, 1.0], [2.0, 3.0]])
+ 
+# # (a) Testa fatoracao_lu sem pivoteamento
+# print("\n(a) Tentando fatoracao_lu (sem pivoteamento) em A = [[0,1],[2,3]]:")
+# try:
+#     L_sem, U_sem = fatoracao_lu(A_plu)
+#     print(f"    Resultado L:\n{L_sem}")
+#     print(f"    Resultado U:\n{U_sem}")
+#     print(f"    Erro ||LU-A||_F = {np.linalg.norm(L_sem @ U_sem - A_plu, 'fro'):.2e}")
+#     # Verificar se U[0,0] e zero (divisao por zero iminente)
+#     if abs(U_sem[0, 0]) < 1e-14:
+#         print("    ATENCAO: pivo U[0,0] nulo — resultado invalido (NaN/Inf esperado)!")
+#     else:
+#         print("    Concluiu sem excecao (verifique se o resultado e confiavel).")
+# except Exception as e:
+#     print(f"    ERRO capturado: {e}")
+ 
+# # (b) scipy.linalg.lu
+# print("\n(b) Usando scipy.linalg.lu (com pivoteamento):")
+# P_sp, L_sp, U_sp = scipy_lu(A_plu)
+ 
+# print(f"\n    Matriz de permutacao P:\n{P_sp}")
+# print(f"\n    Triangular inferior L:\n{L_sp}")
+# print(f"\n    Triangular superior U:\n{U_sp}")
+# print(f"\n    Verificacao P @ A = L @ U:")
+# print(f"    P @ A =\n{P_sp @ A_plu}")
+# print(f"    L @ U =\n{L_sp @ U_sp}")
+# err_plu = np.linalg.norm(P_sp @ A_plu - L_sp @ U_sp, "fro")
+# print(f"\n    Erro ||PA - LU||_F = {err_plu:.2e}")
+ 
+# # Demonstracao: como resolver Ax = b com PLU
+# b_plu = np.array([1.0, 2.0])
+# # PA = LU  =>  Ax = b  =>  PAx = Pb  =>  LUx = Pb
+# Pb = P_sp @ b_plu
+# y_plu = subst_prog(L_sp, Pb)
+# x_plu = subst_retro(U_sp, y_plu)
+# print(f"\n    Solucao de Ax = {b_plu} via PLU: x = {x_plu}")
+# print(f"    Residuo ||Ax - b||_2 = {np.linalg.norm(A_plu @ x_plu - b_plu):.2e}")
  
 
 
 # ANA
-# print()
-# print("=" * 60)
-# print("SECAO 3 - Fatoracao de Cholesky para matrizes SPD")
-# print("=" * 60)
+print()
+print("=" * 60)
+print("SECAO 3 - Fatoracao de Cholesky para matrizes SPD")
+print("=" * 60)
 
 # # Q3.1 - Identificando matrizes SPD
 # print()
@@ -482,82 +494,81 @@ print()
 print("=" * 60)
 print("SECAO 4 - Algoritmo de Thomas para sistemas tridiagonais")
 print("=" * 60)
-# Q4.1 — Sistema tridiagonal 5x5 e verificacao
-print()
-print("--- Q4.1: Sistema tridiagonal 5x5 e verificacao ---")
- 
-a41 = [-1.0, -1.0, -1.0, -1.0]   # subdiagonal
-b41 = [4.0, 4.0, 4.0, 4.0, 4.0]  # diagonal principal
-c41 = [-1.0, -1.0, -1.0, -1.0]   # superdiagonal
-d41 = [1.0, 0.0, 0.0, 0.0, 1.0]  # lado direito
- 
-x41 = thomas(a41, b41, c41, d41)
-A41 = montar_tridiagonal(a41, b41, c41)
-residuo41 = np.linalg.norm(A41 @ x41 - np.array(d41, dtype=float))
- 
-print(f"Solucao x = {x41}")
-print(f"Residuo ||Ax - d||_2 = {residuo41:.2e}")
-print("Este sistema surge na discretizacao por diferencas finitas")
-print("da equacao de Poisson 1D: -u''(x) = f(x) com c.c. de Dirichlet.")
- 
-# Q4.2 — Thomas vs. Gauss: escalonamento
-print()
-print("--- Q4.2: Thomas vs. Gauss — escalonamento ---")
-print(f"\n{'n':>7}  {'Thomas (ms)':>12}  {'Gauss (ms)':>12}  {'Razao':>8}")
-print("-" * 48)
- 
-sizes_42 = [100, 500, 1000, 5000, 10000]
-t_thomas_42 = []
-t_gauss_42 = []
- 
-for n in sizes_42:
-    a = np.full(n - 1, -1.0)
-    b_diag = np.full(n, 4.0)
-    c = np.full(n - 1, -1.0)
-    d = np.ones(n)
- 
-    # Tempo Thomas
-    t0 = time.perf_counter()
-    thomas(a, b_diag, c, d)
-    t_th = (time.perf_counter() - t0) * 1000
-    t_thomas_42.append(t_th)
- 
-    # Tempo Gauss (apenas ate n=1000, custo O(n^3) inviavel para maiores)
-    if n <= 1000:
-        A_dense = montar_tridiagonal(a, b_diag, c)
-        t0 = time.perf_counter()
-        resolver_gauss(A_dense, d.copy())
-        t_g = (time.perf_counter() - t0) * 1000
-        t_gauss_42.append(t_g)
-        razao = t_g / t_th
-        print(f"{n:>7d}  {t_th:>12.3f}  {t_g:>12.3f}  {razao:>7.1f}x")
-    else:
-        # Extrapola via O(n^3) a partir de n=1000
-        t_g_extrap = t_gauss_42[2] * (n / 1000) ** 3
-        t_gauss_42.append(t_g_extrap)
-        razao = t_g_extrap / t_th
-        print(f"{n:>7d}  {t_th:>12.3f}  {t_g_extrap:>11.0f}* {razao:>7.0f}x")
- 
-print("(*) valor extrapolado via O(n^3) a partir de n=1000")
- 
-# Q4.3 — Comparacao de memoria para n=10000
-print()
-print("--- Q4.3: Comparacao de memoria para n=10000 ---")
-n_mem = 10000
-MB_densa = n_mem**2 * 8 / (2**20)
-MB_tri = 3 * n_mem * 8 / (2**20)
-print(f"Matriz densa (float64):          {MB_densa:.2f} MB")
-print(f"Representacao tridiagonal:        {MB_tri:.4f} MB")
-print(f"Fator de reducao de memoria:      {MB_densa / MB_tri:.0f}x")
-print("Para n>=30000, a matriz densa ultrapassaria 7 GB -- inviavel.")
-print("O Thomas resolve sistemas com n>1.000.000 em segundos.")
-
-
-# # ANA
+# # Q4.1 — Sistema tridiagonal 5x5 e verificacao
 # print()
-# print("=" * 60)
-# print("SECAO 5 - Custo computacional empirico")
-# print("=" * 60)
+# print("--- Q4.1: Sistema tridiagonal 5x5 e verificacao ---")
+ 
+# a41 = [-1.0, -1.0, -1.0, -1.0]   # subdiagonal
+# b41 = [4.0, 4.0, 4.0, 4.0, 4.0]  # diagonal principal
+# c41 = [-1.0, -1.0, -1.0, -1.0]   # superdiagonal
+# d41 = [1.0, 0.0, 0.0, 0.0, 1.0]  # lado direito
+ 
+# x41 = thomas(a41, b41, c41, d41)
+# A41 = montar_tridiagonal(a41, b41, c41)
+# residuo41 = np.linalg.norm(A41 @ x41 - np.array(d41, dtype=float))
+ 
+# print(f"Solucao x = {x41}")
+# print(f"Residuo ||Ax - d||_2 = {residuo41:.2e}")
+# print("Este sistema surge na discretizacao por diferencas finitas")
+# print("da equacao de Poisson 1D: -u''(x) = f(x) com c.c. de Dirichlet.")
+ 
+# # Q4.2 — Thomas vs. Gauss: escalonamento
+# print()
+# print("--- Q4.2: Thomas vs. Gauss — escalonamento ---")
+# print(f"\n{'n':>7}  {'Thomas (ms)':>12}  {'Gauss (ms)':>12}  {'Razao':>8}")
+# print("-" * 48)
+ 
+# sizes_42 = [100, 500, 1000, 5000, 10000]
+# t_thomas_42 = []
+# t_gauss_42 = []
+ 
+# for n in sizes_42:
+#     a = np.full(n - 1, -1.0)
+#     b_diag = np.full(n, 4.0)
+#     c = np.full(n - 1, -1.0)
+#     d = np.ones(n)
+ 
+#     # Tempo Thomas
+#     t0 = time.perf_counter()
+#     thomas(a, b_diag, c, d)
+#     t_th = (time.perf_counter() - t0) * 1000
+#     t_thomas_42.append(t_th)
+ 
+#     # Tempo Gauss (apenas ate n=1000, custo O(n^3) inviavel para maiores)
+#     if n <= 1000:
+#         A_dense = montar_tridiagonal(a, b_diag, c)
+#         t0 = time.perf_counter()
+#         resolver_gauss(A_dense, d.copy())
+#         t_g = (time.perf_counter() - t0) * 1000
+#         t_gauss_42.append(t_g)
+#         razao = t_g / t_th
+#         print(f"{n:>7d}  {t_th:>12.3f}  {t_g:>12.3f}  {razao:>7.1f}x")
+#     else:
+#         # Extrapola via O(n^3) a partir de n=1000
+#         t_g_extrap = t_gauss_42[2] * (n / 1000) ** 3
+#         t_gauss_42.append(t_g_extrap)
+#         razao = t_g_extrap / t_th
+#         print(f"{n:>7d}  {t_th:>12.3f}  {t_g_extrap:>11.0f}* {razao:>7.0f}x")
+ 
+# print("(*) valor extrapolado via O(n^3) a partir de n=1000")
+ 
+# # Q4.3 — Comparacao de memoria para n=10000
+# print()
+# print("--- Q4.3: Comparacao de memoria para n=10000 ---")
+# n_mem = 10000
+# MB_densa = n_mem**2 * 8 / (2**20)
+# MB_tri = 3 * n_mem * 8 / (2**20)
+# print(f"Matriz densa (float64):          {MB_densa:.2f} MB")
+# print(f"Representacao tridiagonal:        {MB_tri:.4f} MB")
+# print(f"Fator de reducao de memoria:      {MB_densa / MB_tri:.0f}x")
+# print("Para n>=30000, a matriz densa ultrapassaria 7 GB -- inviavel.")
+# print("O Thomas resolve sistemas com n>1.000.000 em segundos.")
+
+# ANA
+print()
+print("=" * 60)
+print("SECAO 5 - Custo computacional empirico")
+print("=" * 60)
 
 
 # def medir_tempo(funcao):
@@ -667,6 +678,7 @@ print("O Thomas resolve sistemas com n>1.000.000 em segundos.")
 # for nome, tempo, flops in metodos_q5:
 #     print(f"{nome:<24} {tempo:>12.6f} {flops:>18.3e} {tempo / tempo_chol_comp:>22.2f}")
 
+
 # RAISSA
 print()
 print("=" * 60)
@@ -674,208 +686,424 @@ print("SECAO 6 - Condicionamento e sensibilidade à pertubacao")
 print("=" * 60)
 
 
-
-# --- Q6.1: Matriz de Hilbert ---
-print()
-print("--- Q6.1: Matriz de Hilbert ---")
-print(f"\n{'n':>4} {'kappa':>14} {'Erro relativo':>16} {'Digitos corretos':>18}")
-print("-" * 58)
+# # --- Q6.1: Matriz de Hilbert ---
+# print()
+# print("--- Q6.1: Matriz de Hilbert ---")
+# print(f"\n{'n':>4} {'kappa':>14} {'Erro relativo':>16} {'Digitos corretos':>18}")
+# print("-" * 58)
  
-ns_q61 = [4, 6, 8, 10, 12]
-kappas_q61 = []
-erros_q61 = []
+# ns_q61 = [4, 6, 8, 10, 12]
+# kappas_q61 = []
+# erros_q61 = []
  
-for n in ns_q61:
-    kappa, erro = experimento_hilbert(n)
-    digitos = max(0.0, 16 - np.log10(kappa))
-    kappas_q61.append(kappa)
-    erros_q61.append(erro)
-    print(f"{n:>4d} {kappa:>14.4e} {erro:>16.4e} {digitos:>18.2f}")
- 
-print()
-print("Observacao: para n=12 os digitos corretos chegam a 0,")
-print("indicando que a solucao e completamente nao confiavel.")
-print("O resultado torna-se nao confiavel a partir de n=10.")
- 
-
-# Grafico Q6.1
-fig, axes = plt.subplots(1, 2, figsize=(11, 4))
- 
-axes[0].semilogy(ns_q61, kappas_q61, marker="o", color="#e07b54", linewidth=2)
-axes[0].set_title("Q6.1 — Numero de condicao κ₂(Hₙ)", fontsize=11)
-axes[0].set_xlabel("n")
-axes[0].set_ylabel("κ₂(Hₙ)")
-axes[0].grid(True, alpha=0.4)
- 
-axes[1].semilogy(ns_q61, erros_q61, marker="s", color="#5b8fc9", linewidth=2)
-axes[1].set_title("Q6.1 — Erro relativo na solucao", fontsize=11)
-axes[1].set_xlabel("n")
-axes[1].set_ylabel("Erro relativo")
-axes[1].grid(True, alpha=0.4)
- 
-plt.tight_layout()
-plt.savefig("grafico_q6_1.png", dpi=150)
-plt.close()
-print("\nGrafico salvo em grafico_q6_1.png")
- 
-# --- Q6.2: Amplificacao de erros ---
-print()
-print("--- Q6.2: Amplificacao de erros ---")
- 
-np.random.seed(7)
- 
-# H6
-H6 = hilbert(6)
-b6 = H6 @ np.ones(6)
-amps_H6 = perturbar_b(H6, b6)
-kappa_H6 = np.linalg.cond(H6)
- 
-# I6
-I6 = np.eye(6)
-b_I6 = np.ones(6)
-amps_I6 = perturbar_b(I6, b_I6)
-kappa_I6 = np.linalg.cond(I6)
- 
-print(f"\nA = H6:  kappa = {kappa_H6:.4e}")
-print(f"  Amplificacao maxima:  {amps_H6.max():.4e}")
-print(f"  Amplificacao media:   {amps_H6.mean():.4e}")
-print(f"  Max <= kappa? {amps_H6.max() <= kappa_H6}")
- 
-print(f"\nA = I6:  kappa = {kappa_I6:.4e}")
-print(f"  Amplificacao maxima:  {amps_I6.max():.4e}")
-print(f"  Amplificacao media:   {amps_I6.mean():.4e}")
- 
-# Grafico Q6.2
-fig, axes = plt.subplots(1, 2, figsize=(11, 4))
- 
-axes[0].hist(amps_H6, bins=15, color="#e07b54", edgecolor="white")
-axes[0].axvline(kappa_H6, color="red", linestyle="--",
-                label=f"κ(H₆) = {kappa_H6:.2e}")
-axes[0].set_title("Q6.2 — Amplificacao com A = H₆", fontsize=11)
-axes[0].set_xlabel("Fator de amplificacao")
-axes[0].set_ylabel("Frequencia")
-axes[0].legend()
-axes[0].grid(True, alpha=0.3)
- 
-axes[1].hist(amps_I6, bins=5, color="#5b8fc9", edgecolor="white")
-axes[1].axvline(1.0, color="red", linestyle="--", label="κ(I₆) = 1.0")
-axes[1].set_title("Q6.2 — Amplificacao com A = I₆", fontsize=11)
-axes[1].set_xlabel("Fator de amplificacao")
-axes[1].set_ylabel("Frequencia")
-axes[1].legend()
-axes[1].grid(True, alpha=0.3)
- 
-plt.tight_layout()
-plt.savefig("grafico_q6_2.png", dpi=150)
-plt.close()
-print("\nGrafico salvo em grafico_q6_2.png")
- 
-# --- Q6.3: Bem-condicionada vs. Mal-condicionada ---
-print()
-print("--- Q6.3: Impacto de perturbacao em A ---")
- 
-np.random.seed(42)
- 
-# Matriz bem-condicionada: diagonal com entradas proximas de 1
-A_bem = np.diag([1.0, 1.1, 0.9, 1.05, 0.95])
-kappa_bem = np.linalg.cond(A_bem)
- 
-# Matriz mal-condicionada: Hilbert 5x5
-A_mal = hilbert(5)
-kappa_mal = np.linalg.cond(A_mal)
- 
-print(f"\nA_bem (diagonal ~1):  kappa = {kappa_bem:.4f}")
-print(f"A_mal (Hilbert H5):   kappa = {kappa_mal:.4e}")
- 
-eps_A = 1e-6
-np.random.seed(0)
-dA = eps_A * np.random.randn(5, 5)
- 
-x_exato_bem = np.ones(5)
-b_bem = A_bem @ x_exato_bem
-x_bem_pert = np.linalg.solve(A_bem + dA, b_bem)
-erro_bem = np.linalg.norm(x_bem_pert - x_exato_bem) / np.linalg.norm(x_exato_bem)
- 
-x_exato_mal = np.ones(5)
-b_mal = A_mal @ x_exato_mal
-x_mal_pert = np.linalg.solve(A_mal + dA, b_mal)
-erro_mal = np.linalg.norm(x_mal_pert - x_exato_mal) / np.linalg.norm(x_exato_mal)
- 
-print(f"\nPerturbacao ||δA||/||A|| ≈ {eps_A:.0e}")
-print(f"A_bem: erro relativo na solucao = {erro_bem:.4e}")
-print(f"A_mal: erro relativo na solucao = {erro_mal:.4e}")
-print(f"Razao de erros (mal/bem): {erro_mal / erro_bem:.1f}x")
-print()
-print("Implicacao pratica: em A_mal uma perturbacao de 1e-6 em A")
-print(f"provoca um erro de {erro_mal:.1e} na solucao (~{erro_mal*100:.1f}%).")
-
-# print("\n--- Q6.1: Matriz de Hilbert ---")
-# for n in [4, 6, 8, 10, 12]:
+# for n in ns_q61:
 #     kappa, erro = experimento_hilbert(n)
-#     print(f"n={n:2d} kappa={kappa:.2e} erro={erro:.2e}")
-
-# # RAISANA
+#     digitos = max(0.0, 16 - np.log10(kappa))
+#     kappas_q61.append(kappa)
+#     erros_q61.append(erro)
+#     print(f"{n:>4d} {kappa:>14.4e} {erro:>16.4e} {digitos:>18.2f}")
+ 
 # print()
-# print("=" * 60)
-# print("SECAO 7 - PageRank Numérico")
-# print("=" * 60)
+# print("Observacao: para n=12 os digitos corretos chegam a 0,")
+# print("indicando que a solucao e completamente nao confiavel.")
+# print("O resultado torna-se nao confiavel a partir de n=10.")
+ 
 
+# # Grafico Q6.1
+# fig, axes = plt.subplots(1, 2, figsize=(11, 4))
+ 
+# axes[0].semilogy(ns_q61, kappas_q61, marker="o", color="#e07b54", linewidth=2)
+# axes[0].set_title("Q6.1 — Numero de condicao κ₂(Hₙ)", fontsize=11)
+# axes[0].set_xlabel("n")
+# axes[0].set_ylabel("κ₂(Hₙ)")
+# axes[0].grid(True, alpha=0.4)
+ 
+# axes[1].semilogy(ns_q61, erros_q61, marker="s", color="#5b8fc9", linewidth=2)
+# axes[1].set_title("Q6.1 — Erro relativo na solucao", fontsize=11)
+# axes[1].set_xlabel("n")
+# axes[1].set_ylabel("Erro relativo")
+# axes[1].grid(True, alpha=0.4)
+ 
 # plt.tight_layout()
-# plt.savefig("resultados.pdf", dpi=150)
-# plt.show()
-
-# # RAISANA
+# plt.savefig("grafico_q6_1.png", dpi=150)
+# plt.close()
+# print("\nGrafico salvo em grafico_q6_1.png")
+ 
+# # --- Q6.2: Amplificacao de erros ---
 # print()
-# print("=" * 60)
-# print("SECAO 8 - Desafio")
-# print("=" * 60)
+# print("--- Q6.2: Amplificacao de erros ---")
+ 
+# np.random.seed(7)
+ 
+# # H6
+# H6 = hilbert(6)
+# b6 = H6 @ np.ones(6)
+# amps_H6 = perturbar_b(H6, b6)
+# kappa_H6 = np.linalg.cond(H6)
+ 
+# # I6
+# I6 = np.eye(6)
+# b_I6 = np.ones(6)
+# amps_I6 = perturbar_b(I6, b_I6)
+# kappa_I6 = np.linalg.cond(I6)
+ 
+# print(f"\nA = H6:  kappa = {kappa_H6:.4e}")
+# print(f"  Amplificacao maxima:  {amps_H6.max():.4e}")
+# print(f"  Amplificacao media:   {amps_H6.mean():.4e}")
+# print(f"  Max <= kappa? {amps_H6.max() <= kappa_H6}")
+ 
+# print(f"\nA = I6:  kappa = {kappa_I6:.4e}")
+# print(f"  Amplificacao maxima:  {amps_I6.max():.4e}")
+# print(f"  Amplificacao media:   {amps_I6.mean():.4e}")
+ 
+# # Grafico Q6.2
+# fig, axes = plt.subplots(1, 2, figsize=(11, 4))
+ 
+# axes[0].hist(amps_H6, bins=15, color="#e07b54", edgecolor="white")
+# axes[0].axvline(kappa_H6, color="red", linestyle="--",
+#                 label=f"κ(H₆) = {kappa_H6:.2e}")
+# axes[0].set_title("Q6.2 — Amplificacao com A = H₆", fontsize=11)
+# axes[0].set_xlabel("Fator de amplificacao")
+# axes[0].set_ylabel("Frequencia")
+# axes[0].legend()
+# axes[0].grid(True, alpha=0.3)
+ 
+# axes[1].hist(amps_I6, bins=5, color="#5b8fc9", edgecolor="white")
+# axes[1].axvline(1.0, color="red", linestyle="--", label="κ(I₆) = 1.0")
+# axes[1].set_title("Q6.2 — Amplificacao com A = I₆", fontsize=11)
+# axes[1].set_xlabel("Fator de amplificacao")
+# axes[1].set_ylabel("Frequencia")
+# axes[1].legend()
+# axes[1].grid(True, alpha=0.3)
+ 
+# plt.tight_layout()
+# plt.savefig("grafico_q6_2.png", dpi=150)
+# plt.close()
+# print("\nGrafico salvo em grafico_q6_2.png")
+ 
+# # --- Q6.3: Bem-condicionada vs. Mal-condicionada ---
+# print()
+# print("--- Q6.3: Impacto de perturbacao em A ---")
+ 
+# np.random.seed(42)
+ 
+# # Matriz bem-condicionada: diagonal com entradas proximas de 1
+# A_bem = np.diag([1.0, 1.1, 0.9, 1.05, 0.95])
+# kappa_bem = np.linalg.cond(A_bem)
+ 
+# # Matriz mal-condicionada: Hilbert 5x5
+# A_mal = hilbert(5)
+# kappa_mal = np.linalg.cond(A_mal)
+ 
+# print(f"\nA_bem (diagonal ~1):  kappa = {kappa_bem:.4f}")
+# print(f"A_mal (Hilbert H5):   kappa = {kappa_mal:.4e}")
+ 
+# eps_A = 1e-6
+# np.random.seed(0)
+# dA = eps_A * np.random.randn(5, 5)
+ 
+# x_exato_bem = np.ones(5)
+# b_bem = A_bem @ x_exato_bem
+# x_bem_pert = np.linalg.solve(A_bem + dA, b_bem)
+# erro_bem = np.linalg.norm(x_bem_pert - x_exato_bem) / np.linalg.norm(x_exato_bem)
+ 
+# x_exato_mal = np.ones(5)
+# b_mal = A_mal @ x_exato_mal
+# x_mal_pert = np.linalg.solve(A_mal + dA, b_mal)
+# erro_mal = np.linalg.norm(x_mal_pert - x_exato_mal) / np.linalg.norm(x_exato_mal)
+ 
+# print(f"\nPerturbacao ||δA||/||A|| ≈ {eps_A:.0e}")
+# print(f"A_bem: erro relativo na solucao = {erro_bem:.4e}")
+# print(f"A_mal: erro relativo na solucao = {erro_mal:.4e}")
+# print(f"Razao de erros (mal/bem): {erro_mal / erro_bem:.1f}x")
+# print()
+# print("Implicacao pratica: em A_mal uma perturbacao de 1e-6 em A")
+# print(f"provoca um erro de {erro_mal:.1e} na solucao (~{erro_mal*100:.1f}%).")
 
-
-#GERAÇÃO DE GRÁFICOS DE RAISSA
-# ------------------------------------------------------------------------------
-# Graficos — Q2.3: comparativo de tempos
-fig, ax = plt.subplots(figsize=(6, 4))
-categorias = ["Gauss repetido", "LU reutilizado"]
-tempos = [t_gauss, t_lu]
-cores = ["#e07b54", "#5b8fc9"]
-bars = ax.bar(categorias, tempos, color=cores, width=0.4, edgecolor="white")
-ax.bar_label(bars, fmt="%.3f s", padding=4, fontsize=10)
-ax.set_title(f"Q2.3 — Gauss vs. LU reutilizado\n(n={n_bench}, k={k_bench} sistemas)", fontsize=11)
-ax.set_ylabel("Tempo total (s)")
-ax.set_ylim(0, max(tempos) * 1.25)
-ax.text(
-    0.97, 0.85,
-    f"Aceleracao: {t_gauss / t_lu:.1f}x",
-    transform=ax.transAxes,
-    ha="right", va="top",
-    fontsize=10,
-    bbox=dict(boxstyle="round,pad=0.3", fc="#f0f4fb", ec="#5b8fc9"),
-)
-plt.tight_layout()
-plt.savefig("grafico_q2_3.png", dpi=300)
-plt.close()
-print("\nGrafico de comparativo de tempos salvo")
-print("\n" + "-" * 60)
-print("Execucao concluida com sucesso.")
+# RAISSANA
+print()
+print("=" * 60)
+print("SECAO 7 - PageRank Numerico")
 print("=" * 60)
 
-# ---- Grafico Q4.2 -----------------------------------------------
-fig, ax = plt.subplots(figsize=(8, 5))
-n_medidos = sizes_42[:3]
-t_g_medidos = t_gauss_42[:3]
+# # Q7.1 - Mini-rede de 4 paginas
+# print()
+# print("--- Q7.1: PageRank para mini-rede de 4 paginas ---")
+
+# # Substitua G4 pela matriz de adjacencia fornecida na aula, se ela for diferente.
+# # Convencao: G[i, j] = 1 indica link da pagina j para a pagina i.
+# G4 = np.array(
+#     [
+#         [0, 1, 1, 0],
+#         [0, 0, 1, 1],
+#         [1, 0, 0, 1],
+#         [0, 0, 1, 0],
+#     ],
+#     dtype=float,
+# )
+
+# alpha = 0.85
+# P4 = matriz_transicao(G4)
+# A4, b4, _ = sistema_pagerank(G4, alpha)
+# pi_gauss_4, _, _, _ = pagerank_gauss(G4, alpha)
+# pi_lu_4, _, _, _ = pagerank_lu(G4, alpha)
+
+# print("\nMatriz de adjacencia G:")
+# print(np.array2string(G4, precision=4, suppress_small=True))
+
+# print("\nMatriz de transicao P:")
+# print(np.array2string(P4, precision=4, suppress_small=True))
+
+# print("\nSistema A pi = b, com A = I - 0.85 P^T:")
+# print("A:")
+# print(np.array2string(A4, precision=4, suppress_small=True))
+# print("b:")
+# print(np.array2string(b4, precision=4, suppress_small=True))
+
+# print("\nPageRank por Gauss:")
+# print(np.array2string(pi_gauss_4, precision=6, suppress_small=True))
+
+# print("\nPageRank por LU:")
+# print(np.array2string(pi_lu_4, precision=6, suppress_small=True))
+
+# print(f"\n||pi_gauss||_1 = {np.linalg.norm(pi_gauss_4, 1):.6f}")
+# print(f"||pi_lu||_1    = {np.linalg.norm(pi_lu_4, 1):.6f}")
+# print(f"Diferenca ||pi_gauss - pi_lu||_2 = {np.linalg.norm(pi_gauss_4 - pi_lu_4):.6e}")
+
+# ordem_paginas = np.argsort(-pi_gauss_4) + 1
+# print(f"Ordem das paginas por rank decrescente: {ordem_paginas}")
+
+
+# # Q7.2 - Grafo aleatorio com n = 20
+# print()
+# print("--- Q7.2: PageRank para grafo aleatorio n=20 ---")
+
+# G20 = grafo_aleatorio(n=20, p=0.3, seed=0)
+# resultados_q72 = comparar_metodos(G20, alpha=0.85)
+# rank_scipy = resultados_q72["SciPy lu_solve"]["rank"]
+
+# print(f"\n{'Metodo':<18} {'Tempo (s)':>12} {'Residuo':>14} {'Dif. vs SciPy':>16}")
+# print("-" * 64)
+# for nome, dados in resultados_q72.items():
+#     diferenca = np.linalg.norm(dados["rank"] - rank_scipy)
+#     print(f"{nome:<18} {dados['tempo']:>12.6f} {dados['residuo']:>14.6e} {diferenca:>16.6e}")
+
+# print("\nTop 5 paginas pelo PageRank SciPy:")
+# top5 = np.argsort(-rank_scipy)[:5] + 1
+# print(top5)
+
+
+# # Q7.3 - Condicionamento quando alpha -> 1
+# print()
+# print("--- Q7.3: Condicionamento para diferentes valores de alpha ---")
+
+# alphas_q73 = np.array([0.5, 0.7, 0.85, 0.95, 0.99])
+# kappas_q73 = condicoes_alpha(G20, alphas_q73)
+
+# print(f"\n{'alpha':>8} {'kappa2(I - alpha P^T)':>28}")
+# print("-" * 40)
+# for alpha_i, kappa_i in zip(alphas_q73, kappas_q73):
+#     print(f"{alpha_i:>8.2f} {kappa_i:>28.6e}")
+
+# plt.figure(figsize=(6, 4))
+# plt.semilogy(alphas_q73, kappas_q73, marker="o")
+# plt.title("Q7.3 - Condicionamento do sistema PageRank")
+# plt.xlabel("alpha")
+# plt.ylabel("kappa2(I - alpha P^T)")
+# plt.grid(True, which="both", alpha=0.4)
+# plt.tight_layout()
+# plt.savefig("grafico_q7_3.png", dpi=150)
+# plt.close()
+# print("\nGrafico salvo em grafico_q7_3.png")
+
+# RAISANA
+print()
+print("=" * 60)
+print("SECAO 8 - Desafio")
+print("=" * 60)
+
+
+# # Q8.1 - Analise de estabilidade em cascata
+# print()
+# print("--- Q8.1: Analise de estabilidade em cascata ---")
+
+# epsilons = np.array([1e-1, 1e-3, 1e-6, 1e-9, 1e-12])
+# x_exato_81 = np.array([1.0, 1.0])
+# kappas_81 = []
+# residuos_81 = []
+# erros_81 = []
+
+# print(f"\n{'epsilon':>12} {'kappa(Aeps)':>16} {'residuo':>14} {'erro relativo':>16}")
+# print("-" * 64)
+# for eps in epsilons:
+#     A_eps = np.array(
+#         [
+#             [1.0, 1.0],
+#             [1.0, 1.0 + eps],
+#         ]
+#     )
+#     b_eps = A_eps @ x_exato_81
+#     x_calc = np.linalg.solve(A_eps, b_eps)
+
+#     kappa_eps = np.linalg.cond(A_eps)
+#     residuo_eps = np.linalg.norm(A_eps @ x_calc - b_eps)
+#     erro_eps = np.linalg.norm(x_calc - x_exato_81) / np.linalg.norm(x_exato_81)
+
+#     kappas_81.append(kappa_eps)
+#     residuos_81.append(residuo_eps)
+#     erros_81.append(erro_eps)
+#     print(f"{eps:>12.0e} {kappa_eps:>16.6e} {residuo_eps:>14.6e} {erro_eps:>16.6e}")
+
+# plt.figure(figsize=(6, 4))
+# plt.loglog(epsilons, kappas_81, marker="o", label="kappa(Aeps)")
+# plt.loglog(epsilons, erros_81, marker="s", label="erro relativo")
+# plt.gca().invert_xaxis()
+# plt.title("Q8.1 - Estabilidade quando epsilon -> 0")
+# plt.xlabel("epsilon")
+# plt.ylabel("valor em escala log")
+# plt.grid(True, which="both", alpha=0.4)
+# plt.legend()
+# plt.tight_layout()
+# plt.savefig("grafico_q8_1.png", dpi=150)
+# plt.close()
+# print("\nGrafico salvo em grafico_q8_1.png")
+
+
+# # Q8.2 - Bloco tridiagonal e EDPs 2D
+# print()
+# print("--- Q8.2: Bloco tridiagonal e EDPs 2D ---")
+
+# m = 10
+# n_82 = m * m
+# T = diags(
+#     diagonals=[-np.ones(m - 1), 4 * np.ones(m), -np.ones(m - 1)],
+#     offsets=[-1, 0, 1],
+#     format="csr",
+# )
+# I = sparse_eye(m, format="csr")
+# S = diags(
+#     diagonals=[-np.ones(m - 1), -np.ones(m - 1)],
+#     offsets=[-1, 1],
+#     shape=(m, m),
+#     format="csr",
+# )
+# A_sparse = kron(I, T, format="csr") + kron(S, I, format="csr")
+# b_82 = np.ones(n_82)
+
+# A_dense_82 = A_sparse.toarray()
+# t0 = time.perf_counter()
+# x_gauss_82 = resolver_gauss(A_dense_82, b_82)
+# tempo_gauss_82 = time.perf_counter() - t0
+# res_gauss_82 = np.linalg.norm(A_dense_82 @ x_gauss_82 - b_82)
+
+# t0 = time.perf_counter()
+# x_sparse_82 = spsolve(A_sparse, b_82)
+# tempo_sparse_82 = time.perf_counter() - t0
+# res_sparse_82 = np.linalg.norm(A_sparse @ x_sparse_82 - b_82)
+
+# mem_densa_82 = A_dense_82.nbytes / 2**20
+# mem_esparsa_82 = (
+#     A_sparse.data.nbytes + A_sparse.indices.nbytes + A_sparse.indptr.nbytes
+# ) / 2**20
+
+# print(f"\nGrade m x m: {m} x {m}")
+# print(f"Tamanho do sistema: n = {n_82}")
+# print(f"Tempo Gauss denso: {tempo_gauss_82:.6f} s, residuo = {res_gauss_82:.6e}")
+# print(f"Tempo spsolve esparso: {tempo_sparse_82:.6f} s, residuo = {res_sparse_82:.6e}")
+# print(f"Memoria matriz densa: {mem_densa_82:.4f} MB")
+# print(f"Memoria matriz esparsa CSR: {mem_esparsa_82:.4f} MB")
+
+
+# # Q8.3 - Implementacao vetorizada da LU
+# print()
+# print("--- Q8.3: Implementacao vetorizada da fatoracao LU ---")
+
+
+# def fatoracao_lu_vetorizada(A, tol=1e-12):
+#     """Fatoracao LU com atualizacoes vetorizadas de linhas e colunas."""
+#     U = np.array(A, dtype=float, copy=True)
+#     n = U.shape[0]
+#     L = np.eye(n)
+
+#     for k in range(n - 1):
+#         if abs(U[k, k]) < tol:
+#             raise ValueError(f"Pivo nulo ou muito pequeno em k={k}")
+#         L[k + 1:, k] = U[k + 1:, k] / U[k, k]
+#         U[k + 1:, k:] -= np.outer(L[k + 1:, k], U[k, k:])
+#         U[k + 1:, k] = 0.0
+
+#     return L, U
+
+
+# np.random.seed(8)
+# n_83 = 100
+# A_83 = np.random.randn(n_83, n_83) + n_83 * np.eye(n_83)
+
+# t0 = time.perf_counter()
+# L_original, U_original = fatoracao_lu(A_83)
+# tempo_lu_original = time.perf_counter() - t0
+
+# t0 = time.perf_counter()
+# L_vet, U_vet = fatoracao_lu_vetorizada(A_83)
+# tempo_lu_vet = time.perf_counter() - t0
+
+# erro_original_83 = np.linalg.norm(L_original @ U_original - A_83, "fro")
+# erro_vet_83 = np.linalg.norm(L_vet @ U_vet - A_83, "fro")
+# ganho_83 = tempo_lu_original / tempo_lu_vet
+
+# print(f"\nTempo LU original: {tempo_lu_original:.6f} s")
+# print(f"Tempo LU vetorizada: {tempo_lu_vet:.6f} s")
+# print(f"Ganho de desempenho: {ganho_83:.2f}x")
+# print(f"Erro ||LU - A||_F original: {erro_original_83:.6e}")
+# print(f"Erro ||LU - A||_F vetorizada: {erro_vet_83:.6e}")
+
+
+
+# #GERAÇÃO DE GRÁFICOS
+# # ------------------------------------------------------------------------------------------------
+# # Graficos — Q2.3: comparativo de tempos
+# fig, ax = plt.subplots(figsize=(6, 4))
+# categorias = ["Gauss repetido", "LU reutilizado"]
+# tempos = [t_gauss, t_lu]
+# cores = ["#e07b54", "#5b8fc9"]
+# bars = ax.bar(categorias, tempos, color=cores, width=0.4, edgecolor="white")
+# ax.bar_label(bars, fmt="%.3f s", padding=4, fontsize=10)
+# ax.set_title(f"Q2.3 — Gauss vs. LU reutilizado\n(n={n_bench}, k={k_bench} sistemas)", fontsize=11)
+# ax.set_ylabel("Tempo total (s)")
+# ax.set_ylim(0, max(tempos) * 1.25)
+# ax.text(
+#     0.97, 0.85,
+#     f"Aceleracao: {t_gauss / t_lu:.1f}x",
+#     transform=ax.transAxes,
+#     ha="right", va="top",
+#     fontsize=10,
+#     bbox=dict(boxstyle="round,pad=0.3", fc="#f0f4fb", ec="#5b8fc9"),
+# )
+# plt.tight_layout()
+# plt.savefig("grafico_q2_3.png", dpi=300)
+# plt.close()
+# print("\nGrafico de comparativo de tempos salvo")
+# print("\n" + "-" * 60)
+# print("Execucao concluida com sucesso.")
+# print("=" * 60)
+
+# # ---- Grafico Q4.2 -----------------------------------------------
+# fig, ax = plt.subplots(figsize=(8, 5))
+# n_medidos = sizes_42[:3]
+# t_g_medidos = t_gauss_42[:3]
  
-ax.loglog(sizes_42, t_thomas_42, marker="o", label="Thomas O(n)", linewidth=2)
-ax.loglog(n_medidos, t_g_medidos, marker="s", color="red",
-          label="Gauss O(n³) medido", linewidth=2)
-ax.loglog(sizes_42[2:], t_gauss_42[2:], marker="s", color="red",
-          linestyle="--", label="Gauss O(n³) extrapolado")
+# ax.loglog(sizes_42, t_thomas_42, marker="o", label="Thomas O(n)", linewidth=2)
+# ax.loglog(n_medidos, t_g_medidos, marker="s", color="red",
+#           label="Gauss O(n³) medido", linewidth=2)
+# ax.loglog(sizes_42[2:], t_gauss_42[2:], marker="s", color="red",
+#           linestyle="--", label="Gauss O(n³) extrapolado")
  
-ax.set_title("Q4.2 — Thomas vs. Gauss: Escalonamento", fontsize=13)
-ax.set_xlabel("n (tamanho do sistema)")
-ax.set_ylabel("Tempo (ms)")
-ax.legend()
-ax.grid(True, which="both", alpha=0.4)
-plt.tight_layout()
-plt.savefig("grafico_q4_2.png", dpi=150)
-plt.close()
-print("\nGrafico thomas_vs_gauss salvo ")
+# ax.set_title("Q4.2 — Thomas vs. Gauss: Escalonamento", fontsize=13)
+# ax.set_xlabel("n (tamanho do sistema)")
+# ax.set_ylabel("Tempo (ms)")
+# ax.legend()
+# ax.grid(True, which="both", alpha=0.4)
+# plt.tight_layout()
+# plt.savefig("grafico_q4_2.png", dpi=150)
+# plt.close()
+# print("\nGrafico thomas_vs_gauss salvo ")
