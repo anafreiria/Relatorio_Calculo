@@ -7,6 +7,9 @@ import numpy as np
 import time
 import matplotlib.pyplot as plt
 from math import sin
+import matplotlib
+matplotlib.use("Agg")
+from scipy.linalg import hilbert
 
 from cholesky import cholesky, resolver_cholesky
 from condicao import experimento_hilbert, perturbar_b
@@ -670,6 +673,142 @@ print("=" * 60)
 print("SECAO 6 - Condicionamento e sensibilidade à pertubacao")
 print("=" * 60)
 
+
+
+# --- Q6.1: Matriz de Hilbert ---
+print()
+print("--- Q6.1: Matriz de Hilbert ---")
+print(f"\n{'n':>4} {'kappa':>14} {'Erro relativo':>16} {'Digitos corretos':>18}")
+print("-" * 58)
+ 
+ns_q61 = [4, 6, 8, 10, 12]
+kappas_q61 = []
+erros_q61 = []
+ 
+for n in ns_q61:
+    kappa, erro = experimento_hilbert(n)
+    digitos = max(0.0, 16 - np.log10(kappa))
+    kappas_q61.append(kappa)
+    erros_q61.append(erro)
+    print(f"{n:>4d} {kappa:>14.4e} {erro:>16.4e} {digitos:>18.2f}")
+ 
+print()
+print("Observacao: para n=12 os digitos corretos chegam a 0,")
+print("indicando que a solucao e completamente nao confiavel.")
+print("O resultado torna-se nao confiavel a partir de n=10.")
+ 
+
+# Grafico Q6.1
+fig, axes = plt.subplots(1, 2, figsize=(11, 4))
+ 
+axes[0].semilogy(ns_q61, kappas_q61, marker="o", color="#e07b54", linewidth=2)
+axes[0].set_title("Q6.1 — Numero de condicao κ₂(Hₙ)", fontsize=11)
+axes[0].set_xlabel("n")
+axes[0].set_ylabel("κ₂(Hₙ)")
+axes[0].grid(True, alpha=0.4)
+ 
+axes[1].semilogy(ns_q61, erros_q61, marker="s", color="#5b8fc9", linewidth=2)
+axes[1].set_title("Q6.1 — Erro relativo na solucao", fontsize=11)
+axes[1].set_xlabel("n")
+axes[1].set_ylabel("Erro relativo")
+axes[1].grid(True, alpha=0.4)
+ 
+plt.tight_layout()
+plt.savefig("grafico_q6_1.png", dpi=150)
+plt.close()
+print("\nGrafico salvo em grafico_q6_1.png")
+ 
+# --- Q6.2: Amplificacao de erros ---
+print()
+print("--- Q6.2: Amplificacao de erros ---")
+ 
+np.random.seed(7)
+ 
+# H6
+H6 = hilbert(6)
+b6 = H6 @ np.ones(6)
+amps_H6 = perturbar_b(H6, b6)
+kappa_H6 = np.linalg.cond(H6)
+ 
+# I6
+I6 = np.eye(6)
+b_I6 = np.ones(6)
+amps_I6 = perturbar_b(I6, b_I6)
+kappa_I6 = np.linalg.cond(I6)
+ 
+print(f"\nA = H6:  kappa = {kappa_H6:.4e}")
+print(f"  Amplificacao maxima:  {amps_H6.max():.4e}")
+print(f"  Amplificacao media:   {amps_H6.mean():.4e}")
+print(f"  Max <= kappa? {amps_H6.max() <= kappa_H6}")
+ 
+print(f"\nA = I6:  kappa = {kappa_I6:.4e}")
+print(f"  Amplificacao maxima:  {amps_I6.max():.4e}")
+print(f"  Amplificacao media:   {amps_I6.mean():.4e}")
+ 
+# Grafico Q6.2
+fig, axes = plt.subplots(1, 2, figsize=(11, 4))
+ 
+axes[0].hist(amps_H6, bins=15, color="#e07b54", edgecolor="white")
+axes[0].axvline(kappa_H6, color="red", linestyle="--",
+                label=f"κ(H₆) = {kappa_H6:.2e}")
+axes[0].set_title("Q6.2 — Amplificacao com A = H₆", fontsize=11)
+axes[0].set_xlabel("Fator de amplificacao")
+axes[0].set_ylabel("Frequencia")
+axes[0].legend()
+axes[0].grid(True, alpha=0.3)
+ 
+axes[1].hist(amps_I6, bins=5, color="#5b8fc9", edgecolor="white")
+axes[1].axvline(1.0, color="red", linestyle="--", label="κ(I₆) = 1.0")
+axes[1].set_title("Q6.2 — Amplificacao com A = I₆", fontsize=11)
+axes[1].set_xlabel("Fator de amplificacao")
+axes[1].set_ylabel("Frequencia")
+axes[1].legend()
+axes[1].grid(True, alpha=0.3)
+ 
+plt.tight_layout()
+plt.savefig("grafico_q6_2.png", dpi=150)
+plt.close()
+print("\nGrafico salvo em grafico_q6_2.png")
+ 
+# --- Q6.3: Bem-condicionada vs. Mal-condicionada ---
+print()
+print("--- Q6.3: Impacto de perturbacao em A ---")
+ 
+np.random.seed(42)
+ 
+# Matriz bem-condicionada: diagonal com entradas proximas de 1
+A_bem = np.diag([1.0, 1.1, 0.9, 1.05, 0.95])
+kappa_bem = np.linalg.cond(A_bem)
+ 
+# Matriz mal-condicionada: Hilbert 5x5
+A_mal = hilbert(5)
+kappa_mal = np.linalg.cond(A_mal)
+ 
+print(f"\nA_bem (diagonal ~1):  kappa = {kappa_bem:.4f}")
+print(f"A_mal (Hilbert H5):   kappa = {kappa_mal:.4e}")
+ 
+eps_A = 1e-6
+np.random.seed(0)
+dA = eps_A * np.random.randn(5, 5)
+ 
+x_exato_bem = np.ones(5)
+b_bem = A_bem @ x_exato_bem
+x_bem_pert = np.linalg.solve(A_bem + dA, b_bem)
+erro_bem = np.linalg.norm(x_bem_pert - x_exato_bem) / np.linalg.norm(x_exato_bem)
+ 
+x_exato_mal = np.ones(5)
+b_mal = A_mal @ x_exato_mal
+x_mal_pert = np.linalg.solve(A_mal + dA, b_mal)
+erro_mal = np.linalg.norm(x_mal_pert - x_exato_mal) / np.linalg.norm(x_exato_mal)
+ 
+print(f"\nPerturbacao ||δA||/||A|| ≈ {eps_A:.0e}")
+print(f"A_bem: erro relativo na solucao = {erro_bem:.4e}")
+print(f"A_mal: erro relativo na solucao = {erro_mal:.4e}")
+print(f"Razao de erros (mal/bem): {erro_mal / erro_bem:.1f}x")
+print()
+print("Implicacao pratica: em A_mal uma perturbacao de 1e-6 em A")
+print(f"provoca um erro de {erro_mal:.1e} na solucao (~{erro_mal*100:.1f}%).")
+
 # print("\n--- Q6.1: Matriz de Hilbert ---")
 # for n in [4, 6, 8, 10, 12]:
 #     kappa, erro = experimento_hilbert(n)
@@ -713,9 +852,9 @@ ax.text(
     bbox=dict(boxstyle="round,pad=0.3", fc="#f0f4fb", ec="#5b8fc9"),
 )
 plt.tight_layout()
-plt.savefig("resultadosDeLU.png", dpi=300)
+plt.savefig("grafico_q2_3.png", dpi=300)
 plt.close()
-print("\nGrafico salvo em resultados.pdf")
+print("\nGrafico de comparativo de tempos salvo")
 print("\n" + "-" * 60)
 print("Execucao concluida com sucesso.")
 print("=" * 60)
@@ -737,6 +876,6 @@ ax.set_ylabel("Tempo (ms)")
 ax.legend()
 ax.grid(True, which="both", alpha=0.4)
 plt.tight_layout()
-plt.savefig("grafico_thomas_vs_gauss.png", dpi=150)
+plt.savefig("grafico_q4_2.png", dpi=150)
 plt.close()
-print("\nGrafico salvo em grafico_thomas_vs_gauss.png")
+print("\nGrafico thomas_vs_gauss salvo ")
