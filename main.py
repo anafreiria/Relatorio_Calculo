@@ -38,6 +38,8 @@ print("=" * 60)
 print("SECAO 1 — Eliminação de Gauss com pivoteamento parcial")
 print("=" * 60)
 
+# Nessa primeira secao testaremos o metodo de Gauss, para mostrar o pivoteamento parcial
+# e comparar a estabilidade numerica em casos de sistema bem e mal condicionados.
 
 # # Q1.1 - Verificacao basica
 # print("\n--- Q1.1: Verificacao basica ---")
@@ -129,6 +131,8 @@ print("=" * 60)
 # b_mal = np.array([2.0001, 1], dtype=np.float32)
 # x_exato = np.array([1 / 3, 2 / 3], dtype=np.float32)
 
+# # Esta matriz tem um pivo inicial muito pequeno, por isso evidencia a perda
+# # de precisao quando o metodo e aplicado sem pivoteamento.
 # Au_sem, bu_sem = gauss_sem_pivoteamento(A_mal, b_mal)
 # x_sem = subst_retro_float32(Au_sem, bu_sem)
 # erro_sem = np.abs((x_sem - x_exato) / x_exato)
@@ -148,6 +152,8 @@ print("=" * 60)
 # erros_x1_sem = []
 # erros_x1_com = []
 
+# # Ao diminuir a11, o primeiro pivo fica cada vez menor e o sistema se torna
+# # mais sensivel a erros de arredondamento.
 # for a11 in valores_a11:
 #     A_var = np.array(
 #         [
@@ -351,6 +357,9 @@ print("=" * 60)
 print("SECAO 3 - Fatoracao de Cholesky para matrizes SPD")
 print("=" * 60)
 
+# Esta secao verifica quando a fatoracao de Cholesky pode ser usada,
+# comparando seu custo com LU e aplica o metodo em uma regressao linear.
+
 # # Q3.1 - Identificando matrizes SPD
 # print()
 # print("--- Q3.1: Teste de Cholesky e autovalores ---")
@@ -380,6 +389,8 @@ print("=" * 60)
 #     ),
 # }
 
+# # A fatoracao de Cholesky so deve funcionar para matrizes simetricas
+# # definidas positivas, os autovalores costumam ajudar a confirmar essa propriedade.
 # previsoes_cholesky = {
 #     "A1": "SPD, pois e simetrica e espera-se autovalores positivos.",
 #     "A2": "Nao SPD, pois deve possuir autovalor negativo.",
@@ -422,6 +433,8 @@ print("=" * 60)
 #     B = np.random.randn(n, n)
 #     A_spd = B.T @ B + n * np.eye(n)
 
+#     # B.T @ B gera uma matriz simetrica semidefinida positiva, somar nI
+#     # torna a matriz definida positiva e adequada para Cholesky.
 #     t0 = time.perf_counter()
 #     cholesky(A_spd)
 #     tempo_chol = time.perf_counter() - t0
@@ -469,6 +482,8 @@ print("=" * 60)
 # A_normal = X.T @ X
 # b_normal = X.T @ y
 
+# # As equacoes normais transformam a regressao em um sistema SPD,
+# # permitindo resolver os coeficientes por Cholesky.
 # beta_cholesky, L_normal = resolver_cholesky(A_normal, b_normal)
 # beta_lstsq = np.linalg.lstsq(X, y, rcond=None)[0]
 
@@ -570,6 +585,8 @@ print("=" * 60)
 print("SECAO 5 - Custo computacional empirico")
 print("=" * 60)
 
+# Nesta secao, vamos medir os tempos de execucao para observar, na pratica,
+# como o custo dos metodos cresce conforme aumentamos o tamanho do sistema.
 
 # def medir_tempo(funcao):
 #     """Mede o tempo de execucao de uma chamada."""
@@ -605,6 +622,8 @@ print("=" * 60)
 # c = np.exp(coeficientes[1])
 # tempos_ajuste = c * tamanhos_gauss**alpha
 
+# # O ajuste em escala log-log estima o expoente alpha da lei T(n) = c*n^alpha.
+# # Para Gauss, espera-se um crescimento proximo de n^3.
 # print(f"\nLei ajustada: T(n) = {c:.3e} * n^{alpha:.3f}")
 # print(f"Expoente alpha encontrado: {alpha:.3f}")
 
@@ -633,6 +652,8 @@ print("=" * 60)
 # tempo_mult = time.perf_counter() - t0
 # R = total_mult / tempo_mult
 
+# # A estimativa teorica usa 2n^3/3 operacoes, que e a ordem classica
+# # da eliminacao de Gauss para matrizes densas.
 # tempos_teoricos = (2 * tamanhos_gauss**3 / 3) / R
 # eficiencias = np.array(tempos_gauss_q5) / tempos_teoricos
 
@@ -826,6 +847,9 @@ print("=" * 60)
 print("SECAO 7 - PageRank Numerico")
 print("=" * 60)
 
+# Esta secao modela o PageRank como um sistema linear e compara
+# diferentes formas de resolver o ranking das paginas.
+
 # # Q7.1 - Mini-rede de 4 paginas
 # print()
 # print("--- Q7.1: PageRank para mini-rede de 4 paginas ---")
@@ -848,6 +872,8 @@ print("=" * 60)
 # pi_gauss_4, _, _, _ = pagerank_gauss(G4, alpha)
 # pi_lu_4, _, _, _ = pagerank_lu(G4, alpha)
 
+# # O PageRank e calculado resolvendo A*pi = b, onde alpha controla o peso
+# # dos links em relacao ao salto aleatorio entre paginas.
 # print("\nMatriz de adjacencia G:")
 # print(np.array2string(G4, precision=4, suppress_small=True))
 
@@ -900,6 +926,8 @@ print("=" * 60)
 # alphas_q73 = np.array([0.5, 0.7, 0.85, 0.95, 0.99])
 # kappas_q73 = condicoes_alpha(G20, alphas_q73)
 
+# # Quando alpha se aproxima de 1, o sistema tende a ficar mais mal condicionado,
+# # o que pode aumentar a sensibilidade numerica da solucao.
 # print(f"\n{'alpha':>8} {'kappa2(I - alpha P^T)':>28}")
 # print("-" * 40)
 # for alpha_i, kappa_i in zip(alphas_q73, kappas_q73):
@@ -922,6 +950,8 @@ print("=" * 60)
 print("SECAO 8 - Desafio")
 print("=" * 60)
 
+# Aqui, exploramos casos mais avancados, como estabilidade,
+# matrizes esparsas de EDPs e uma versao vetorizada da fatoracao LU.
 
 # # Q8.1 - Analise de estabilidade em cascata
 # print()
@@ -945,6 +975,8 @@ print("=" * 60)
 #     b_eps = A_eps @ x_exato_81
 #     x_calc = np.linalg.solve(A_eps, b_eps)
 
+#     # Para epsilon muito pequeno, as duas linhas ficam quase dependentes,
+#     # aumentando o numero de condicao da matriz.
 #     kappa_eps = np.linalg.cond(A_eps)
 #     residuo_eps = np.linalg.norm(A_eps @ x_calc - b_eps)
 #     erro_eps = np.linalg.norm(x_calc - x_exato_81) / np.linalg.norm(x_exato_81)
@@ -987,6 +1019,8 @@ print("=" * 60)
 #     shape=(m, m),
 #     format="csr",
 # )
+# # O produto de Kronecker monta a matriz esparsa do problema 2D sem guardar
+# # todos os zeros que apareceriam na representacao densa.
 # A_sparse = kron(I, T, format="csr") + kron(S, I, format="csr")
 # b_82 = np.ones(n_82)
 
@@ -1029,6 +1063,8 @@ print("=" * 60)
 #         if abs(U[k, k]) < tol:
 #             raise ValueError(f"Pivo nulo ou muito pequeno em k={k}")
 #         L[k + 1:, k] = U[k + 1:, k] / U[k, k]
+#         # np.outer atualiza todo o bloco restante de uma vez, evitando loops
+#         # internos em Python e deixando a fatoracao mais rapida.
 #         U[k + 1:, k:] -= np.outer(L[k + 1:, k], U[k, k:])
 #         U[k + 1:, k] = 0.0
 
